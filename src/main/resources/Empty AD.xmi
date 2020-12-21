@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML">
+  <uml:Model xmi:id="_3XlUcAV5Eeu_35Z1GKTxtw" name="Simple Use case diagram">
+    <xmi:Extension extender="http://www.eclipse.org/emf/2002/Ecore">
+      <eAnnotations xmi:id="_3XlUcAV5Eeu_35Z1GKTxtw0" source="genmymodel">
+        <details xmi:id="_3XlUcAV5Eeu_35Z1GKTxtw00" key="uuid" value="_3XlUcAV5Eeu_35Z1GKTxtw"/>
+        <details xmi:id="_3XlUcAV5Eeu_35Z1GKTxtw01" key="author" value="gasheva_99"/>
+      </eAnnotations>
+    </xmi:Extension>
+    <packageImport xmi:id="_3XlUcQV5Eeu_35Z1GKTxtw" importingNamespace="_3XlUcAV5Eeu_35Z1GKTxtw">
+      <xmi:Extension extender="http://www.eclipse.org/emf/2002/Ecore">
+        <eAnnotations xmi:id="_3XlUcQV5Eeu_35Z1GKTxtw0" source="genmymodel">
+          <details xmi:id="_3XlUcQV5Eeu_35Z1GKTxtw00" key="uuid" value="_3XlUcQV5Eeu_35Z1GKTxtw"/>
+        </eAnnotations>
+      </xmi:Extension>
+      <importedPackage href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#/"/>
+    </packageImport>
+    <packagedElement xsi:type="uml:Activity" xmi:id="_z2b9wetuEDiMmbQwYc3JrQ" name="Activity">
+      <xmi:Extension extender="http://www.eclipse.org/emf/2002/Ecore">
+        <eAnnotations xmi:id="_z2b9wetuEDiMmbQwYc3JrQ0" source="genmymodel">
+          <details xmi:id="_z2b9wetuEDiMmbQwYc3JrQ00" key="uuid" value="_z2b9wetuEDiMmbQwYc3JrQ"/>
+        </eAnnotations>
+      </xmi:Extension>
+    </packagedElement>
+  </uml:Model>
+</xmi:XMI>
