@@ -14,7 +14,7 @@ public class App {
     public static void main(String[] args) {
         ADNodesList adNodesList = new ADNodesList();
         XmiParser xmiParser = new XmiParser(adNodesList);
-        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Условные операторы подряд.xmi");
+        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Decision.xmi");
         try {
             xmiParser.Parse();
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -25,17 +25,19 @@ public class App {
             Debug.println(adNodesList.get(i).getId() + " "+ adNodesList.get(i).getType());
         }
         Debug.println("----------------------");
+        adNodesList.connect();
+        adNodesList.print();
 
-        LexicalAnalizator lexicalAnalizator = new LexicalAnalizator(Level.EASY);
-        lexicalAnalizator.setDiagramElements(adNodesList);
-        lexicalAnalizator.check();
-
-        SyntaxAnalizator syntaxAnalizator = new SyntaxAnalizator(Level.EASY);
-        syntaxAnalizator.setDiagramElements(adNodesList);
-        syntaxAnalizator.check();
-
-
-        VerificationResult.mistakes.forEach(Debug::println);
-        VerificationResult.writeInFile("output.txt");
+//        LexicalAnalizator lexicalAnalizator = new LexicalAnalizator(Level.EASY);
+//        lexicalAnalizator.setDiagramElements(adNodesList);
+//        lexicalAnalizator.check();
+//
+//        SyntaxAnalizator syntaxAnalizator = new SyntaxAnalizator(Level.EASY);
+//        syntaxAnalizator.setDiagramElements(adNodesList);
+//        syntaxAnalizator.check();
+//
+//
+//        VerificationResult.mistakes.forEach(Debug::println);
+//        VerificationResult.writeInFile("output.txt");
     }
 }
