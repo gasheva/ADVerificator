@@ -10,8 +10,6 @@ public class DiagramElement extends BaseNode{
     protected List<String> idsOut = new LinkedList<>();       // массив ид входящих переходов
     protected List<String> idsIn = new LinkedList<>();        // массив ид выходящих переходов
 
-    // для работы сети Петри
-    public int token = PetriNet.NO_TOKEN;
     public int petriId;
 
 

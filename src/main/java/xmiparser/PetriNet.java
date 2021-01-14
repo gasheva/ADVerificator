@@ -7,95 +7,115 @@ import entities.ElementType;
 import java.util.*;
 
 public class PetriNet {
-    public static final int NO_TOKEN = -1;
-    public static final int UNCOLORED_TOKEN = 0;
-    private Position header = null;      // позиция, соответствующая начальному состоянию
-    private Position tail = null;        // позиция, соответствующая конечному состоянию
-    private Position current = null;
+    public static final char NO_TOKEN = 0;
+    public static final char TOKEN_WAS_USED = 1;
+    public static final char TOKEN = 2;
+    public static final char NEW_TOKEN = 3;
+
+    private Map<Integer, Stack<Integer>> colors = new HashMap<>(); // для каждого элемента хранит стек цветов
 
     /**
-     * Маска в индексы
-     * @return индексы используемых элементов
+     * Создает пустую маску
+     * @param length необходимая длина
+     * @return строка, заполненная нулями
      */
-    private List<Integer> maskToIndexes(int mask){
-        List<Integer> indexes = new LinkedList<>();
-        String binMask = Integer.toBinaryString(mask);
-        for (int i=binMask.length()-1; i>=0; i--){
-            if (binMask.charAt(i)=='1'){
-                indexes.add(i);
-            }
-        }
-        return indexes;
-    }
-
-    /**
-     * Индексы в маску
-     * @param indexes массив индексов используемы элементов
-     * @return маску число
-     */
-    private int indexesToMask(List<Integer> indexes){
-        int mask = 0;
-        for (Integer index : indexes) {
-            mask+=Math.pow(2, index);
+    private StringBuilder createEmptyMask(int length){
+        StringBuilder mask = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            mask.append(NO_TOKEN);
         }
         return mask;
+        // return String.format("%1$" + length + "s", "").replace(' ', '0');
     }
 
     public void petriCheck(ADNodesList adList) throws Exception {
-        List<List<Integer>> leaves = new LinkedList<>();      // необработанные маски
+        List<StringBuilder> leaves = new LinkedList<>();      // необработанные маски
         Set<Integer> masksInUsed = new HashSet<>(adList.getPetriElementsCount());   // использованные маски
 
         ADNodesList.ADNode current = null;
         // ищем начальное состояние
         ADNodesList.ADNode initNode = adList.findInitial();
-        // кладем токен в начальное состояние
-//        ((DiagramElement)initNode.getValue()).token = UNCOLORED_TOKEN;
 
         // создаем маску и добавляем ее в необработанные
-        leaves.add((int) Math.pow(2, ((DiagramElement)initNode.getValue()).petriId));
+        StringBuilder mask = createEmptyMask(adList.size());
+        mask.setCharAt(((DiagramElement)initNode.getValue()).petriId, (char) TOKEN);
+        leaves.add(mask);
         current = initNode;
 
         boolean cont = true;
 
+        List<StringBuilder> resultMasks = new LinkedList<>();
+
         // главный цикл прохода по всем элементам, участвующих в проверке
         while (cont){
-            int maskInt = leaves.get(0);    // берем первый сверху элемент
-            List<Integer> indexes = maskToIndexes(maskInt);     // получаем индексы используемых элементов
-            List<Integer> newIndexes = new LinkedList();        // массив индексов новых используемых элементов
+            resultMasks.clear();
+            StringBuilder originMask = leaves.get(0);    // берем первый сверху элемент
+            // маска, которую будем изменять по мере деактивации токенов
+            StringBuilder maskCur = new StringBuilder(originMask);  // изначальна совпадает с оригинальной
 
-            // проходим по всем используемым элементам и проверяем можно ли активировать следующий элемент
-            int j = 0;
+            // проходим по всем элементам маски, находим активированные
+            // и проверяем, можно ли активировать следующий элемент
             int i=0;
-            while (i < indexes.size()) {
-                if (indexes.get(i)==-1) continue;   // индекс уже был использован
+
+            resultMasks.add(maskCur);   // добавляем в список результирующих масок исходную (изменяем в последствии)
+            // цикл по маске
+            while (i < maskCur.length()) {
+                if (maskCur.charAt(i) != TOKEN)
+                    continue;   // индекс уже был использован на данном шаге или токена нет
 
                 // нашли используемый элемент
-                ADNodesList.ADNode curNode = adList.getNodeByPetriIndex(indexes.get(i));
-                // проверяем можно ли активировать какой-нибудь следующий и получаем новую маску или -1 в случае невозможности
-                curNode.getNext()
+                ADNodesList.ADNode curNode = adList.getNodeByPetriIndex(maskCur.charAt(i));
 
-                if (((DiagramElement)adList.getNode(j).getValue()).petriId==indexes.get(i)){
-                    ADNodesList.ADNode curNode = adList.getNode(j);
-                    for (int k = 0; k < curNode.nextSize(); k++) {
-                        // проверяем, что следующий элемент не имеет токена с помощью маски
-                        if(indexes.get(((DiagramElement)curNode.getNext(i).getValue()).petriId)!=NO_TOKEN)
-                        {
-                            throw new Exception("Элемент после "+curNode.getValue().getType()+" уже имеет токен");
-                        }
-                        // проверяем активирован ли следующий элемент
-                        if (activate(curNode.getNext(i), indexes)){
-                            // если активирован, устанавливаем на него токен
-                            
+                // особо обрабатываем ситуации, когда элемент имеет несколько выходных переходов
+                if(curNode.nextSize()>1) {
+                    // если эл-т разветвитель, то последующее состояние единственно,
+                    // однако надо установить несколько токенов за раз
+                    if (curNode.getValue().getType() == ElementType.FORK) {
+                        // пытаемся активировать следующие элементы
+                        for (int j = 0; j < curNode.nextSize(); j++) {
+                            StringBuilder newMask = activate(curNode.getNext(j), maskCur);
+                            int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;
                         }
                     }
+                    // если это условный оператор, то он порождает несколько возможных последующих состояний
+                    else {
+                        List<StringBuilder> tempMasks = new LinkedList<>();
 
-                    i++;
+                        // пытаемся активировать следующие элементы
+                        for (int j = 0; j < curNode.nextSize(); j++) {
+                            StringBuilder newMask = activate(curNode.getNext(j), maskCur);
+                            int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;
+                            // если эл-т был активирован, добавляем новые маски в промежуточный список
+                            if (newMask.charAt(indexOfNewToken) == NEW_TOKEN) {
+                                for (StringBuilder resultMask : resultMasks) {
+                                    StringBuilder temp = new StringBuilder(resultMask);
+                                    temp.setCharAt(indexOfNewToken, NEW_TOKEN);
+                                    tempMasks.add(temp);
+                                }
+                                // подготавливаем результирующую маску для данного эл-та
+                                resultMasks = tempMasks;
+                                // удаляем из старой маски токены, которых нет в новой
+                                maskCur = removeTokens(maskCur, newMask);
+                            }
+                        }
+                    }
                 }
-                j++;
+                else{
+                    StringBuilder newMask = activate(curNode.getNext(0), maskCur);
+                    int indexOfNewToken = ((DiagramElement)curNode.getNext(0).getValue()).petriId;
+                    // если эл-т был активирован, добавляем новые маски в промежуточный список
+                    if(newMask.charAt(indexOfNewToken)==NEW_TOKEN){
+                        resultMasks.forEach(x->x.setCharAt(indexOfNewToken, NEW_TOKEN));
+                        // удаляем из старой маски токены, которых нет в новой
+                        maskCur = removeTokens(maskCur, newMask);
+                    }
+                }
+                i++;
             }
 
-            // скидываем токены с текущих элементов
+            // проверяем, что новой маски нет во множестве обработанных и добавляем в необработанные в таком случае
 
+            // добавляем полученную маску в множество обработанных
 
             // заканчиваем тогда, когда активируем последний элемент или пока массив leaves не будет пустым
             if (current.getValue().getType() == ElementType.FINAL_NODE)
@@ -104,88 +124,51 @@ public class PetriNet {
         // проверяем, что достигли конечной маркировки
         // проверяем, что в конечной маркировке остался только один нецветной токен
     }
+    private StringBuilder removeTokens(StringBuilder oldMask, StringBuilder newMask){
+        for (int i = 0; i < oldMask.length(); i++) {
+            if(oldMask.charAt(i)!= newMask.charAt(i) && newMask.charAt(i)==NO_TOKEN)
+                oldMask.setCharAt(i, NO_TOKEN);
+        }
+        return oldMask;
+    }
 
     /**
      * Активирует элемент, если это возможно
      * из переданного массива индексов устанавливает индексы предшествующих элементов в -1, если эл-т был активирован
      * @param element
-     * @param indexes
+     * @param mask
      * @return измененную маску, в кот добавлен новый активный элемент или -1, если элемент не был активирован, или
      * -2, если было нарушено условие безопасности (два токена в одном эл-те)
      */
-    public int activate(ADNodesList.ADNode element, List<Integer> indexes){
-        // синхронизатор обрабатывается отдельно
-        if (element.getValue().getType() == ElementType.JOIN){
-            // все предшествующие элементы должны содержать токен
-            for (int i = 0; i < element.prevSize(); i++) {
-
-                if (indexes.get(((DiagramElement)element.getPrev(i).getValue()).petriId) == NO_TOKEN)
-                    return -1;
-            }
-            // если элемент активирован, устанавливаем в него токен и удаляем из предыдущих
-            for (int i = 0; i < element.prevSize(); i++) {
-                ((DiagramElement)element.getPrev(i).getValue()).token = NO_TOKEN;
-                indexes.remove(((DiagramElement)element.getPrev(i).getValue()).petriId);    // удаляем из массива индексы элементов без токенов
-
-
-            }
-            return true;
-        }
-        else{
+    public StringBuilder activate(ADNodesList.ADNode element, StringBuilder mask){
+        StringBuilder newMask = new StringBuilder(mask);
+        switch (element.getValue().getType()){
+            case JOIN:
+                // все предшествующие элементы должны содержать токен
+                for (int i = 0; i < element.prevSize(); i++) {
+                    int idPrev = ((DiagramElement)element.getPrev(i).getValue()).petriId;
+                    if (mask.charAt(idPrev) == NO_TOKEN)
+                        return new StringBuilder("-1");
+                    newMask.setCharAt(idPrev, NO_TOKEN);    // удаляем токены из предшествующих
+                }
+                // если элемент активирован, устанавливаем в него токен
+                newMask.setCharAt(((DiagramElement)element.getValue()).petriId, TOKEN);
+                return newMask;
             // хотя бы один из предшествующих элементов должен содержать токен
-            for (int i = 0; i < element.prevSize(); i++) {
-                if (indexes.get(((DiagramElement)element.getPrev(i).getValue()).petriId) != NO_TOKEN)
-                    return true;
-
-            }
-            return false;
+            default:
+                boolean foundPrevWithToken = false;
+                for (int i = 0; i < element.prevSize(); i++) {
+                    int idPrev = ((DiagramElement)element.getPrev(i).getValue()).petriId;
+                    if (mask.charAt(idPrev) == TOKEN) {
+                        // если токен уже был найден, то нарушено условие безопасности сети
+                        if (foundPrevWithToken) return new StringBuilder("Exception");
+                        foundPrevWithToken = true;
+                        newMask.setCharAt(idPrev, NO_TOKEN);
+                    }
+                }
+                newMask.setCharAt(((DiagramElement)element.getValue()).petriId, TOKEN);
         }
-
+        return newMask;
     }
 
-    private void addInitial(){
-        header = new Position();
-        current = header;
-    }
-    private void addActive(){
-
-    }
-    private void addFinal(){
-
-    }
-
-    private void addPosition(){
-
-    }
-    private void addTransition(){}
-
-
-    /**
-     * Позиция в сети Петри
-     */
-    private class Position{
-        private Transition next;
-        private int token = NO_TOKEN;      // токены разных цветов
-
-    }
-
-    /**
-     * Переход в сети Петри
-     */
-    private class Transition{
-        private List<Position> next;
-        private List<Position> prev;
-
-        /**
-         * Переход активирован, когда все входные позиции имеют по токену
-         * @return активирован ли переход
-         */
-        private boolean isActive(){
-//            for (int i = 0; i < prev.size(); i++) {
-//                if (prev.get(i).token==NO_TOKEN) return false;
-//            }
-            return true;
-        }
-
-    }
 }
