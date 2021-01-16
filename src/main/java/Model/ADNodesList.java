@@ -189,7 +189,7 @@ public class ADNodesList {
         }
 
         public int prevSize(){return prev.size();}
-        public int nextSize(){return prev.size();}
+        public int nextSize(){return next.size();}
 
         public ADNode getNext(int index){
             return next.get(index);

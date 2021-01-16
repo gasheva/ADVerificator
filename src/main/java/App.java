@@ -10,12 +10,14 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class App {
     public static void main(String[] args) {
         ADNodesList adNodesList = new ADNodesList();
         XmiParser xmiParser = new XmiParser(adNodesList);
-        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Лишняя подпись перехода.xmi");
+        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Отсутствует условие.xmi");
         try {
             xmiParser.Parse();
         } catch (ParserConfigurationException | SAXException | IOException e) {
