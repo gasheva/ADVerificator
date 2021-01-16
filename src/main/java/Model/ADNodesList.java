@@ -56,6 +56,24 @@ public class ADNodesList {
         }
         return null;
     }
+    /**
+     * Найти конеченое состояние
+     * @return ссылка на узел конеченого состояния
+     */
+    public ADNode findFinal(){
+        for (int i = 0; i < nodes.size(); i++) {
+            if (nodes.get(i).getValue().getType()==ElementType.FINAL_NODE) {
+                return nodes.get(i);
+            }
+        }
+
+        try {
+            throw new ClassNotFoundException();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     /**
      * Установить связи между элементами ДА

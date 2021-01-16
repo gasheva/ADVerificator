@@ -1,7 +1,5 @@
 package entities;
 
-import xmiparser.PetriNet;
-
 import java.util.LinkedList;
 import java.util.List;
 

@@ -4,6 +4,7 @@ import result.VerificationResult;
 import verification.Level;
 import verification.lexical.LexicalAnalizator;
 import verification.syntax.SyntaxAnalizator;
+import xmiparser.PetriNet;
 import xmiparser.XmiParser;
 import org.xml.sax.SAXException;
 
@@ -14,7 +15,7 @@ public class App {
     public static void main(String[] args) {
         ADNodesList adNodesList = new ADNodesList();
         XmiParser xmiParser = new XmiParser(adNodesList);
-        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Decision.xmi");
+        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Лишняя подпись перехода.xmi");
         try {
             xmiParser.Parse();
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -39,5 +40,10 @@ public class App {
 //
 //        VerificationResult.mistakes.forEach(Debug::println);
 //        VerificationResult.writeInFile("output.txt");
+
+
+        PetriNet petriNet = new PetriNet();
+        petriNet.petriCheck(adNodesList);
+
     }
 }

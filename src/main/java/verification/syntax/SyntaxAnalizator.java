@@ -176,6 +176,7 @@ public class SyntaxAnalizator {
                 writeMistake(level.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.NEXT_DECISION.toString());
 
         }
+
     }
 
     private void writeMistake(String mistake){
