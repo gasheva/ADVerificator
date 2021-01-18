@@ -17,7 +17,7 @@ public class App {
     public static void main(String[] args) {
         ADNodesList adNodesList = new ADNodesList();
         XmiParser xmiParser = new XmiParser(adNodesList);
-        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Отсутствует условие.xmi");
+        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Использование join вместо merge.xmi");
         try {
             xmiParser.Parse();
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -47,5 +47,7 @@ public class App {
         PetriNet petriNet = new PetriNet();
         petriNet.petriCheck(adNodesList);
 
+        Debug.println("---Рубрика \"Ошибки\"---");
+        VerificationResult.mistakes.forEach(System.out::println);
     }
 }
