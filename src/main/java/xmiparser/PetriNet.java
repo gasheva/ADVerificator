@@ -14,12 +14,12 @@ public class PetriNet {
     public static final char TOKEN = '1';
     public static final char NEW_TOKEN = '2';
     public final  int NO_COLOR = 0;
-    private Random random = new Random();
+    private final Random random = new Random();
 
     private Map<Integer, Stack<Integer>> colors = new HashMap<>(); // для каждого элемента хранит стек цветов
 
     /**
-     * Создает пустую маску
+     * Создает маску, в которой все эл-ты неактивны
      * @param length необходимая длина
      * @return строка, заполненная нулями
      */
@@ -58,7 +58,6 @@ public class PetriNet {
         // создаем маску и добавляем ее в необработанные
         StringBuilder mask = createEmptyMask(adList.getPetriElementsCount());
         mask.setCharAt(((DiagramElement)initNode.getValue()).petriId, TOKEN);
-        Debug.println("Mask = " + mask);
         leaves.add(mask);
         masksInUsed.add(mask.toString());   // добавляем в множество использованных
         colors.get(((DiagramElement)initNode.getValue()).petriId).push(NO_COLOR);   // добавляем цвет токена
@@ -72,8 +71,7 @@ public class PetriNet {
         while (cont){
             StringBuilder originMask = leaves.poll();  // берем первый сверху элемент
             stepResultMasks.clear();
-            // маска, которую будем изменять по мере деактивации токенов
-            StringBuilder stepMask = new StringBuilder(originMask);
+            StringBuilder stepMask = new StringBuilder(originMask); // маска, которую будем изменять по мере деактивации токенов
             stepResultMasks.add(new StringBuilder(stepMask));   // добавляем в список результирующих масок исходную (изменится в процессе)
 
             int i=0;
@@ -85,39 +83,27 @@ public class PetriNet {
                     i++;
                     continue;   // интересуют только эл-ты, содержащие токены на данном шаге
                 }
-
                 // нашли активный элемент
                 ADNodesList.ADNode curNode = adList.getNodeByPetriIndex(i);     //индекс в списке совпадает с петри ид эл-та
                 int curNodeIndex = ((DiagramElement) curNode.getValue()).petriId;
-                // получаем цвета токена текущего эл-та
-                Stack<Integer>newColors = colors.get(curNodeIndex);
-//                colors.put(curNodeIndex, new Stack<>());
+                Stack<Integer>newColors = colors.get(curNodeIndex);     // получаем цвета токена текущего эл-та
 
                 // особо обрабатываем ситуации, когда элемент имеет несколько выходных переходов
                 if(curNode.nextSize()>1) {
-
                     // если эл-т разветвитель, то последующее состояние единственно, однако надо установить несколько токенов за раз
                     if (curNode.getValue().getType() == ElementType.FORK) {
-                        // удаляем из маски токен
-                        stepMask.setCharAt(curNodeIndex, NO_TOKEN);
-                        // добавляем новый цвет токена
-                        newColors.push(generateRandomColor());
+                        stepMask.setCharAt(curNodeIndex, NO_TOKEN);     // удаляем из маски токен
+                        newColors.push(generateRandomColor());          // добавляем новый цвет токена
 
                         // активируем все следующие элементы
                         for (int j = 0; j < curNode.nextSize(); j++) {
                             // сразу после форка не может быть join'a, поэтому все эл-ты будут активированы
                             int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;
                             // проверка, что эл-т не был раннее активирован
-                            if(wasAlreadyActive(indexOfNewToken, stepResultMasks)){
-                                ElementType type = curNode.getNext(j).getValue().getType();
-                                writeMistake("", type.toString(), type==ElementType.ACTIVITY? ((ActivityNode) curNode.getNext(j).getValue()).getName():"", MISTAKES.TWO_TOKENS.toString());
-                                return;
-                            }
+                            if(wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(j))) return;
                             // изменяем существующие результирующие маски
                             updateStepMasks(((DiagramElement) curNode.getValue()).petriId, indexOfNewToken, stepResultMasks);
-                            // связываем цвета с эл-м
-                            colors.put(indexOfNewToken, newColors);
-                            colors.put(curNodeIndex, new Stack<>());
+                            moveColors(indexOfNewToken, curNodeIndex, newColors);   // связываем цвета с эл-м
                         }
                     }
                     // если это условный оператор, то он порождает несколько возможных последующих состояний
@@ -127,12 +113,7 @@ public class PetriNet {
                         for (int j = 0; j < curNode.nextSize(); j++) {
                             int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;      // индекс активируемого эл-та
                             // проверка, что эл-т не был раннее активирован
-                            if(wasAlreadyActive(indexOfNewToken, stepResultMasks))
-                            {
-                                ElementType type = curNode.getNext(j).getValue().getType();
-                                writeMistake("", type.toString(), type==ElementType.ACTIVITY? ((ActivityNode) curNode.getNext(j).getValue()).getName():"", MISTAKES.TWO_TOKENS.toString());
-                                return;
-                            }
+                            if(wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(j))) return;
                             // Join обрабатывается с помощью reverse проверки
                             if ((curNode.getNext(j).getValue()).getType() == ElementType.JOIN) {
                                 StringBuilder result = activateJoin(curNode.getNext(j), stepMask, stepResultMasks, newColors);
@@ -149,9 +130,7 @@ public class PetriNet {
                                     temp.setCharAt(((DiagramElement) curNode.getValue()).petriId, NO_TOKEN);        // удаляем токен текущего эл-та
                                     decisionMasks.add(temp);
                                 }
-                                // связываем цвета с эл-м
-                                colors.put(indexOfNewToken, newColors);
-                                colors.put(curNodeIndex, new Stack<>());
+                                moveColors(indexOfNewToken, curNodeIndex, newColors);   // связываем цвета с эл-м
                             }
 
                         }
@@ -162,13 +141,8 @@ public class PetriNet {
                 else{       // если выходной переход один
                     int indexOfNewToken = ((DiagramElement) curNode.getNext(0).getValue()).petriId;
                     // проверка, что эл-т не был раннее активирован
-                    if(wasAlreadyActive(indexOfNewToken, stepResultMasks))
-                    {
-                        ElementType type = curNode.getNext(0).getValue().getType();
-                        writeMistake("", type.toString(), type==ElementType.ACTIVITY? ((ActivityNode) curNode.getNext(0).getValue()).getName():"", MISTAKES.TWO_TOKENS.toString());
-                        return;
-                    }
-                    // если это Join
+                    if(wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(0))) return;
+                    // если следующий Join
                     if ((curNode.getNext(0).getValue()).getType() == ElementType.JOIN) {
                         StringBuilder result = activateJoin(curNode.getNext(0), stepMask, stepResultMasks, newColors);
                         if (!result.toString().equals("-1"))
@@ -177,9 +151,7 @@ public class PetriNet {
                     else {
                         stepMask.setCharAt(((DiagramElement) curNode.getValue()).petriId, NO_TOKEN);
                         updateStepMasks(((DiagramElement) curNode.getValue()).petriId, indexOfNewToken, stepResultMasks);
-                        // связываем цвета с эл-м
-                        colors.put(indexOfNewToken, newColors);
-                        colors.put(curNodeIndex, new Stack<>());
+                        moveColors(indexOfNewToken, curNodeIndex, newColors);   // связываем цвета с эл-м
                     }
                 }
                 i++;
@@ -236,7 +208,7 @@ public class PetriNet {
     }
 
     //TODO: проверка, что на два токена (активируемый эл-т уже был активирован (1/2); тупиковые листья уже обрабатываются; +
-    // цветные токены (изменить форк и джоин)
+    // цветные токены (изменить форк и джоин)  +
     // выводить таблицу ид (обычный и петри), тип эл-та, описание эл-та
     // при наведении на ошибку - возможные причины
 
@@ -263,7 +235,7 @@ public class PetriNet {
                 case TWO_TOKENS: return "в элементе пересеклись токены. Возможен тупик";
                 case DEAD_ROAD: return "тупик";
                 case MANY_TOKENS_IN_END: return "при достижении конечного состояния остались токены";
-                case COULD_NOT_REACH_FINAL: return "недостижимое конечное состояние";
+                case COULD_NOT_REACH_FINAL: return "недостижимое конечное состояние";       // TODO: вывод масок-тупиков
                 case FINAL_COLOR_TOKEN: return "достигли конечное состояние с цветным токеном. Отсутствует парный синхронизатор";
                 default:
                     throw new IllegalArgumentException();
@@ -271,10 +243,18 @@ public class PetriNet {
         }
     }
 
-    private boolean wasAlreadyActive(int tokenIndex, List<StringBuilder> stepResultMasks){
+    private void moveColors(int indexOfNewToken, int curNodeIndex, Stack<Integer> newColors){
+        colors.put(indexOfNewToken, newColors);
+        colors.put(curNodeIndex, new Stack<>());
+    }
+
+    private boolean wasAlreadyActive(int tokenIndex, List<StringBuilder> stepResultMasks, ADNodesList.ADNode curNode){
         for (StringBuilder stepResultMask : stepResultMasks) {
-            if(stepResultMask.charAt(tokenIndex)!=NO_TOKEN)
+            if(stepResultMask.charAt(tokenIndex)!=NO_TOKEN) {
+                ElementType type = curNode.getValue().getType();
+                writeMistake("", type.toString(), type==ElementType.ACTIVITY? ((ActivityNode) curNode.getValue()).getName():"", MISTAKES.TWO_TOKENS.toString());
                 return true;
+            }
         }
         return false;
     }
