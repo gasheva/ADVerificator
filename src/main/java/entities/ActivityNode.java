@@ -8,7 +8,7 @@ public class ActivityNode extends DiagramElement{
     private String name;    // содержит отображаемый на элементе текст
 
     public ActivityNode(String id, String inPartition, String name) {
-        super(id, inPartition);
+        super(id, inPartition, name);
         this.name = name;
     }
     //region Getter-Setter

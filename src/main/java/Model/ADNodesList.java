@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
 /**
@@ -196,6 +197,12 @@ public class ADNodesList {
         }
         public ADNode getPrev(int index){return prev.get(index);}
 
+        public List<String> getNextIds(){
+            return next.stream().map(x-> x.getValue().getId()).collect(Collectors.toList());
+        }
+        public List<String> getPrevIds(){
+            return prev.stream().map(x-> x.getValue().getId()).collect(Collectors.toList());
+        }
         //endregion
     }
 }

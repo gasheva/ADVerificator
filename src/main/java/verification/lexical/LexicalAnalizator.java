@@ -3,7 +3,7 @@ package verification.lexical;
 import Model.ADNodesList;
 import debugging.Debug;
 import entities.*;
-import result.VerificationResult;
+import result.*;
 import verification.Level;
 
 import java.util.Arrays;
@@ -51,10 +51,10 @@ public class LexicalAnalizator {
                 case MERGE:
                     break;
                 case ACTIVITY:
-                    checkActivity((ActivityNode)diagramElements.get(i));
+                    checkActivity((ActivityNode)diagramElements.get(i), diagramElements.getNode(i));
                     break;
                 case DECISION:
-                    checkDecision((DecisionNode)diagramElements.get(i));
+                    checkDecision((DecisionNode)diagramElements.get(i), diagramElements.getNode(i));
                     break;
                 case SWIMLANE:
                     checkSwimlane((Swimlane)diagramElements.get(i));
@@ -77,34 +77,35 @@ public class LexicalAnalizator {
 
         if (diagramElements.get(flow.getSrc()).getType()!=ElementType.DECISION) {
             if (!flow.getText().equals("")) {
-                if(!isCond) writeMistake(Level.HARD.toString(), flow.getType().toString(), "", MISTAKES.HAVE_MARK.toString() + " - \"" + flow.getText() + "\"");
+                if(!isCond) MistakeFactory.createMistake(Level.HARD, MISTAKES.HAVE_MARK.toString()+" - \"" + flow.getText() + "\"", flow);
+//                if(!isCond) writeMistake(Level.HARD.toString(), flow.getType().toString(), "", MISTAKES.HAVE_MARK.toString() + " - \"" + flow.getText() + "\"");
             }
-            else if (notCondButHaveMark) writeMistake(Level.HARD.toString(), flow.getType().toString(), "", MISTAKES.HAVE_MARK.toString() + " - \"" + flow.getText() + "\"");
+            else if (notCondButHaveMark) MistakeFactory.createMistake(Level.HARD, MISTAKES.HAVE_MARK.toString() + " - \"" + flow.getText() + "\"", flow);//writeMistake(Level.HARD.toString(), flow.getType().toString(), "", MISTAKES.HAVE_MARK.toString() + " - \"" + flow.getText() + "\"");
         }
-
-
-
     }
 
     private void checkSwimlane(Swimlane swimlane) {
         // проверка на заглавную букву
         if ((!swimlane.getName().substring(0, 1).toUpperCase().equals(swimlane.getName().substring(0, 1)))){
-            writeMistake(Level.HARD.toString(), swimlane.getType().toString(), swimlane.getName(), MISTAKES.SMALL_LETTER.toString());
+            MistakeFactory.createMistake(Level.HARD, MISTAKES.SMALL_LETTER.toString(), swimlane);
+//            writeMistake(Level.HARD.toString(), swimlane.getType().toString(), swimlane.getName(), MISTAKES.SMALL_LETTER.toString());
         }
     }
-    private void checkActivity(ActivityNode activity) {
+    private void checkActivity(ActivityNode activity, ADNodesList.ADNode node) {
         // проверка на заглавную букву
         if ((!activity.getName().substring(0, 1).toUpperCase().equals(activity.getName().substring(0, 1)))){
-            writeMistake(Level.HARD.toString(), activity.getType().toString(), activity.getName(), MISTAKES.SMALL_LETTER.toString());
+            MistakeFactory.createMistake(Level.HARD, MISTAKES.SMALL_LETTER.toString(), node);
+//            writeMistake(Level.HARD.toString(), activity.getType().toString(), activity.getName(), MISTAKES.SMALL_LETTER.toString());
         }
         // получаем первое слово существительного и проверяем, что оно не заканчивается на ь или т
         String firstWord = activity.getName().split(" ")[0];
         Debug.println(firstWord);
 
         if (firstWord.endsWith("ь")&&!firstWord.endsWith("ль")||firstWord.endsWith("т"))
-            writeMistake(Level.EASY.toString(), activity.getType().toString(), activity.getName(), MISTAKES.NOT_NOUN.toString());
+            MistakeFactory.createMistake(Level.EASY, MISTAKES.NOT_NOUN.toString(), node);
+            //writeMistake(Level.EASY.toString(), activity.getType().toString(), activity.getName(), MISTAKES.NOT_NOUN.toString());
     }
-    private void checkDecision(DecisionNode decision){
+    private void checkDecision(DecisionNode decision, ADNodesList.ADNode node){
         // добавляем вопрос для перехода
         BaseNode flowIn = diagramElements.get(decision.getInId(0));
         String quest = ((ControlFlow)flowIn).getText();
@@ -121,12 +122,13 @@ public class LexicalAnalizator {
 
         // поиск совпадающих названий
         if (checkAlt)
-        decision.findEqualAlternatives().forEach(x->writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.REPEATED_ALT.toString()+" - "+x));
+        decision.findEqualAlternatives().forEach(x->MistakeFactory.createMistake(Level.HARD, MISTAKES.REPEATED_ALT.toString()+" - "+x, node));// writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.REPEATED_ALT.toString()+" - "+x)
 
         // проверка на альтернативу без подписи
         if(checkAlt)
             if(decision.findEmptyAlternative())
-                writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.HAVE_EMPTY_ALT.toString());
+                MistakeFactory.createMistake(Level.HARD, MISTAKES.HAVE_EMPTY_ALT.toString(), node);
+//                writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.HAVE_EMPTY_ALT.toString());
 
         // проверка, что альтернативы начинаются с заглавных букв
         if(checkAlt)
@@ -134,31 +136,35 @@ public class LexicalAnalizator {
                 String alter = decision.getAlternative(i);
                 if(!alter.equals(""))
                     if (!alter.substring(0, 1).toUpperCase().equals(alter.substring(0, 1)))
-                        writeMistake(level.toString(), decision.getType().toString(), decision.getQuestion()+" альтернатива \""+alter+"\"", MISTAKES.SMALL_LETTER.toString());
+                        MistakeFactory.createMistake(level, " альтернатива \""+alter+"\""+MISTAKES.SMALL_LETTER.toString(), node);
+//                        writeMistake(level.toString(), decision.getType().toString(), decision.getQuestion()+" альтернатива \""+alter+"\"", MISTAKES.SMALL_LETTER.toString());
             }
 
 
         boolean checkQuest = true;
         // проверка, что имеется условие
         if (decision.getQuestion().equals("")) {
-            writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.HAVE_NOT_QUEST.toString());
+            MistakeFactory.createMistake(Level.HARD, decision.getQuestion()+" "+MISTAKES.HAVE_NOT_QUEST.toString(), node);
+//            writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.HAVE_NOT_QUEST.toString());
             checkQuest=false; // дальнейшие проверки условия не требуются (его нет)
         }
 
         // проверка на заглавную букву
         if (checkQuest)
         if ((!decision.getQuestion().substring(0, 1).toUpperCase().equals(decision.getQuestion().substring(0, 1)))){
-            writeMistake(level.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.SMALL_LETTER.toString());
+            MistakeFactory.createMistake(level, decision.getQuestion()+" "+MISTAKES.SMALL_LETTER.toString(), node);
+//            writeMistake(level.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.SMALL_LETTER.toString());
         }
         // заканчивается на знак вопроса
         if (checkQuest)
         if ((!decision.getQuestion().endsWith("?")))
-            writeMistake(level.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.END_WITH_QUEST.toString());
+            MistakeFactory.createMistake(level, decision.getQuestion()+" "+MISTAKES.END_WITH_QUEST.toString(), node);
+//            writeMistake(level.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.END_WITH_QUEST.toString());
     }
 
-    private void writeMistake(String level, String elType, String name, String mistake){
-        VerificationResult.mistakes.add(level+" "+ elType+ " \""+name+"\": "+mistake);
-    }
+//    private void writeMistake(String level, String elType, String name, String mistake){
+//        VerificationResult.mistakes.add(level+" "+ elType+ " \""+name+"\": "+mistake);
+//    }
 
     /**
      * Ошибки, которые могут возникнуть на данном этапе

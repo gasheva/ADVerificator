@@ -31,20 +31,6 @@ public class XmiParser {
         this.xmlFile = new File(path);
     }
 
-    public String getStatus(String xml) throws IOException, SAXException, ParserConfigurationException, XPathExpressionException {
-
-        InputSource source = new InputSource(new StringReader(xml));
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document document = db.parse(source);
-
-        XPathFactory xpathFactory = XPathFactory.newInstance();
-        XPath xpath = xpathFactory.newXPath();
-        String stat = xpath.evaluate("rsp/@stat", document).trim();
-        return stat;
-    }
-
     public void Parse() throws ParserConfigurationException, SAXException, IOException {
         if (!xmlFile.exists()){
             System.out.println("[x] File is not exist");
@@ -178,30 +164,6 @@ public class XmiParser {
 
             }
         }
-//        if (packagedElement.getNodeName().equals("packagedElement") && packagedElement.getNodeType()== Node.ELEMENT_NODE){
-//            Debug.print("Found packagedElement");
-//            packagedElement = (Element) node;
-//            //NodeList packagedElementChildren = node.getChildNodes();
-//            Element tempElement = (Element) packagedElement.getElementsByTagName("ownedNode").item(0);
-//            activityNode = new ActivityNode(tempElement.getAttribute("xmi:id"));
-//            activityNode.setName(tempElement.getAttribute("name"));
-//            //forecastObj.setTemperature(tempElement.getAttribute("min"));
-//            Debug.print(activityNode.getName());
-//        }
     }
 
-    @Deprecated
-    private void traverse2(Node node) {
-        NodeList list = node.getChildNodes();
-        for (int i = 0; i < list.getLength(); i++) {
-            Node currentNode = list.item(i);
-            traverse2(currentNode);
-        }
-
-        if (node.getNodeName().equals("xmi:Extension")) {
-            Element durationElement = (Element) node;
-            Debug.println(durationElement.getAttribute("extender"));
-        }
-
-    }
 }

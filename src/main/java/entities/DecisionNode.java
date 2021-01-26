@@ -8,7 +8,7 @@ public class DecisionNode extends DiagramElement {
     private List<String> alternatives = new LinkedList<>();     // хранит названия альтернатив
 
     public DecisionNode(String id, String inPartition, String question) {
-        super(id, inPartition);
+        super(id, inPartition, question);
         this.question = question;
     }
 

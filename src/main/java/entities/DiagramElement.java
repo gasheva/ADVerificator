@@ -7,13 +7,15 @@ public class DiagramElement extends BaseNode{
     protected String inPartition = "";
     protected List<String> idsOut = new LinkedList<>();       // массив ид входящих переходов
     protected List<String> idsIn = new LinkedList<>();        // массив ид выходящих переходов
+    protected String description = "";
 
     public int petriId;
 
 
-    public DiagramElement(String id, String inPartition) {
+    public DiagramElement(String id, String inPartition, String description) {
         super(id);
         this.inPartition = inPartition;
+        this.description = description;
     }
 
 
@@ -24,6 +26,14 @@ public class DiagramElement extends BaseNode{
 
     public void setInPartition(String inPartition) {
         this.inPartition = inPartition;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void addIn(String allId){
