@@ -23,6 +23,16 @@ public class ADNodesList {
     }
 
     /**
+     * Копировать объект (по факту просто копирует массив ссылок на объекты массива nodes)
+     * @param old
+     */
+    public ADNodesList(ADNodesList old){
+        //this.nodes = old.nodes.stream().map(x->new ADNode(x)).collect(Collectors.toList());
+        this.nodes = old.nodes;
+        this.diagramElementId = old.diagramElementId;
+    }
+
+    /**
      * Возвращает колво элементов, используемых для проверки сетью Петри
      * @return
      */
@@ -166,7 +176,6 @@ public class ADNodesList {
         }).findFirst();
         return node.orElse(null);
     }
-
     //endregion
 
 
@@ -178,6 +187,12 @@ public class ADNodesList {
 
         public ADNode(BaseNode value) {
             this.value = value;
+        }
+
+        public ADNode (ADNode old) {
+            this.value = old.value;
+            this.next = old.next;
+            this.prev = old.prev;
         }
 
         //region Getter-Setter

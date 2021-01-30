@@ -5,6 +5,7 @@ import verification.Level;
 public abstract class Mistake {
     protected String mistake;
     protected Level level;
+    // TODO: ид ошибок, чтобы на картинке подписывать
 
     public Mistake(String mistake, Level level) {
         this.mistake = mistake;
