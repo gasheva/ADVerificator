@@ -204,26 +204,24 @@ public class MainForm extends JFrame {
     }
 
     private void createUIComponents() {
-        Toolkit t=Toolkit.getDefaultToolkit();
-        Image i=t.getImage("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Диаграмма активностей ИС управление заданиями пред.-в2.png"); //TODO: path
+        imagePanel = new JPanel();
 
+        LayoutManager layout = new BoxLayout(imagePanel, BoxLayout.Y_AXIS);
+        Box boxes[] = new Box[2];
+        boxes[0] = Box.createHorizontalBox();
+        boxes[1] = Box.createHorizontalBox();
 
-        imagePanel = new JPanel(){
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
+        boxes[0].createGlue();
+        boxes[1].createGlue();
+        imagePanel.add(boxes[0]);
+        imagePanel.add(boxes[1]);
+        imagePanel.setLayout(layout);
 
-                g.drawImage(i, 120,100,this);
-//                g.drawOval(0, 0, 20, 20);
-//                g.setColor(Color.red);
-//
-//                g.setColor(Color.red);
-//                g.setFont(new Font("Verdana", Font.PLAIN, 11));
-//                g.drawString("1", 20, 20);
-                //g.fillOval(20, 20,10,10);
-
-            }
-        };
+        GraphicsOnly app = new GraphicsOnly();
+        boxes[0].add(app.getGui());
+        app.setImage(app.image);
+        boxes[1].add(app.getControl(), "Last");
+        app.paintImage();
 
     }
 
