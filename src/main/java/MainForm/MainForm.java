@@ -21,6 +21,8 @@ public class MainForm extends JFrame {
     private JScrollPane scrollMistakes;
     private JSplitPane splitPane;
     private JTabbedPane tpViewer;
+    private JScrollPane scrollImage;
+    private JPanel imagePanel;
     private JMenuBar mbMain;
     private JMenu fileMenu;
     private JMenu helpMenu;
@@ -31,6 +33,7 @@ public class MainForm extends JFrame {
     private JMenuItem miHelp;
     private TableModel mistakesModel;
     private TableModel elementsModel;
+    private MyCanvas canvas;
 
     public MainForm(MainController controller, Model model) {
         this.controller = controller;
@@ -39,16 +42,19 @@ public class MainForm extends JFrame {
 
     public void createControls() {
         createJMenuBar();
+        canvas = new MyCanvas();
+        scrollImage.add(canvas);
+        scrollImage.setVisible(true);
+
         splitPane.setDividerLocation(0.5);
-        tpViewer.add("Диаграмма", tpViewer.getTabComponentAt(0));
 
         //background color for scroll panes
         scrollElements.getViewport().setBackground(Color.white);
         scrollMistakes.getViewport().setBackground(Color.white);
+        scrollImage.getViewport().setBackground(Color.blue);
 
         initTable(tblElements, elementsModel, new String[]{"id", "Тип", "Описание", "Следующие", "Предыдущие"});
         initTable(tblMistakes, mistakesModel, new String[]{"Серьезность", "Ошибка", "id элемента"});
-
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         miWriteInFile.addActionListener(e->miWriteInFileClicked());
@@ -133,16 +139,28 @@ public class MainForm extends JFrame {
         //sorter
 //        table.setAutoCreateRowSorter(true);
     }
+    public void drawImage(){
+        String path = getFileToOpen(".png", "png");
+        if (path==null) return;
+        if (path.equals("")) {
+            showMessage("Выберите файл изображения");
+            return;
+        }
+        canvas = new MyCanvas(path);
+        scrollImage.add(canvas);
+
+
+    }
     public void setViewTableVisible(boolean isVisible) {
-        tblElements.setVisible(isVisible);
+        scrollElements.setVisible(isVisible);
     }
     public void setViewDiagramVisible(boolean isVisible) {
-        // TODO
+        scrollImage.setVisible(isVisible);
     }
-    public String getFileToOpen() {
+    public String getFileToOpen(String descr, String extension) {
         JFileChooser c = new JFileChooser("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование");
         FileFilter filter = new FileNameExtensionFilter(
-                ".xmi", "xmi");
+                descr, extension);
         c.removeChoosableFileFilter(c.getFileFilter());
         c.addChoosableFileFilter(filter);
         int rVal = c.showOpenDialog(this);
@@ -182,6 +200,30 @@ public class MainForm extends JFrame {
                         idsNext[0], idsPrev[0]});
             }
         }
+
+    }
+
+    private void createUIComponents() {
+        Toolkit t=Toolkit.getDefaultToolkit();
+        Image i=t.getImage("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Диаграмма активностей ИС управление заданиями пред.-в2.png"); //TODO: path
+
+
+        imagePanel = new JPanel(){
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+
+                g.drawImage(i, 120,100,this);
+//                g.drawOval(0, 0, 20, 20);
+//                g.setColor(Color.red);
+//
+//                g.setColor(Color.red);
+//                g.setFont(new Font("Verdana", Font.PLAIN, 11));
+//                g.drawString("1", 20, 20);
+                //g.fillOval(20, 20,10,10);
+
+            }
+        };
 
     }
 

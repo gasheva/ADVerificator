@@ -5,7 +5,7 @@ import result.Mistakes;
 /**
  * Интерфейс для контроллера отображения диаграммы (таблица или изображение)
  */
-public interface IView {
+public interface IViewController {
     void hide();
     void reveal();
     void draw();

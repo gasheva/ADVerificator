@@ -5,23 +5,24 @@ import Model.Model;
 public class MainController {
     private MainForm view;
     private Model model;
-    IView curViewControl;
-    IView tableControl;
-    IView imageControl;
+    IViewController curViewControl;
+    IViewController tableControl;
+    IViewController imageControl;
 
     public MainController(Model model) {
         this.model = model;
         view = new MainForm(this, model);
 
-        tableControl = new TableView(view, model);
-        // TODO: imageView = new ImageView(view, model);
+        tableControl = new TableViewController(view, model);
+        imageControl = new ImageViewController(view, model);
+        curViewControl = tableControl;
 
         view.createView();
         view.createControls();
     }
 
     public void startVer() {
-        String path = view.getFileToOpen();
+        String path = view.getFileToOpen(".xmi", "xmi");
         if (path==null) return;
         if (path.isEmpty()) {
             view.showMessage("Выберите файл");
@@ -40,8 +41,7 @@ public class MainController {
             curViewControl=tableControl;
         }
         else {
-            curViewControl = tableControl;
-            //TODO:curViewControl=imageControl;
+            curViewControl = imageControl;
         }
         curViewControl.reveal();
     }

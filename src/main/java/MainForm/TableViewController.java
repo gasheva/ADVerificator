@@ -1,13 +1,12 @@
 package MainForm;
 
 import Model.Model;
-import result.Mistakes;
 
-public class TableView implements IView{
+public class TableViewController implements IViewController {
     private MainForm view;
     private Model model;
 
-    public TableView(MainForm view, Model model) {
+    public TableViewController(MainForm view, Model model) {
         this.view = view;
         this.model = model;
     }
