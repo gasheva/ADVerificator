@@ -21,7 +21,7 @@ public class App {
 
         ADNodesList adNodesList = new ADNodesList();
         XmiParser xmiParser = new XmiParser(adNodesList);
-        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Использование join вместо merge.xmi");
+        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\Остаточные элементы.xmi");
         try {
             xmiParser.Parse();
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -35,16 +35,16 @@ public class App {
         adNodesList.connect();
         adNodesList.print();
 
-        LexicalAnalizator lexicalAnalizator = new LexicalAnalizator(Level.EASY);
-        lexicalAnalizator.setDiagramElements(adNodesList);
-        lexicalAnalizator.check();
-
-        SyntaxAnalizator syntaxAnalizator = new SyntaxAnalizator(Level.EASY);
-        syntaxAnalizator.setDiagramElements(adNodesList);
-        syntaxAnalizator.check();
-
-
-        VerificationResult.mistakes.forEach(Debug::println);
+//        LexicalAnalizator lexicalAnalizator = new LexicalAnalizator(Level.EASY);
+//        lexicalAnalizator.setDiagramElements(adNodesList);
+//        lexicalAnalizator.check();
+//
+//        SyntaxAnalizator syntaxAnalizator = new SyntaxAnalizator(Level.EASY);
+//        syntaxAnalizator.setDiagramElements(adNodesList);
+//        syntaxAnalizator.check();
+//
+//
+//        VerificationResult.mistakes.forEach(Debug::println);
 //        VerificationResult.writeInFile("output.txt");
 
 

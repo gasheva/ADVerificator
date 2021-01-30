@@ -8,6 +8,9 @@ import java.util.Objects;
 public abstract class BaseNode {
     protected String id;
     protected ElementType type;
+    public int x;
+    public int y;
+
     public BaseNode(String id) {
         this.id = id;
     }

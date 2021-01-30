@@ -16,12 +16,17 @@ import javax.xml.xpath.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class XmiParser {
     private File xmlFile = null;
     private Element root = null;
     private ADNodesList adNodesList;
+    private int xMin = Integer.MAX_VALUE;
+    private int yMin = Integer.MAX_VALUE;
+    private int delta = 30;
 
     public XmiParser(ADNodesList adNodesList) {
         this.adNodesList = adNodesList;
@@ -42,6 +47,51 @@ public class XmiParser {
 
         findPackagedElement(document.getDocumentElement(), "packagedElement");
         traverse(root);
+
+
+        root = null;
+        findPackagedElement(document.getDocumentElement(), "plane");        // проверка, что был загружен правильны xmi
+        // if (root==null) TODO: сообщение пользователю, если xmi неверный
+        if (root!=null) {
+            findCoordinates(root);  // ~= traverse
+        }
+
+
+    }
+
+    /**
+     * Добавляет координаты к элементам
+     * @param packagedElement
+     */
+    private void findCoordinates(Element packagedElement){
+        NodeList list = packagedElement.getChildNodes();
+        // проходим по всем дочерним элементам и создаем объекты на их основе
+        for(int i=0; i<list.getLength(); i++) {
+            if (list.item(i).getNodeType() == Node.ELEMENT_NODE) {
+                Element currentElement = (Element) list.item(i);
+                if (currentElement.getNodeName().equals("ownedDiagramElements")){       // все эл-ты хранятся в данном теге
+                    String id = currentElement.getAttribute("modelElement");
+                    String xStr = currentElement.getAttribute("x");
+                    String yStr = currentElement.getAttribute("y");
+                    int x=0, y=0;
+                    if (!xStr.equals(""))
+                        x = Integer.parseInt(xStr);
+                    if (!yStr.equals(""))
+                        y = Integer.parseInt(yStr);
+
+                    xMin = Math.min(x, xMin);
+                    yMin = Math.min(y, yMin);
+                    Debug.println("[x] xMin="+xMin+" yMin="+yMin);
+                    // ищем эл-т по ид
+                    BaseNode node = adNodesList.get(id);
+                    if (node!=null) {
+                        node.x = x;
+                        node.y = y;
+                    }
+
+                }
+            }
+        }
     }
 
     /**
@@ -100,7 +150,7 @@ public class XmiParser {
                             adNodesList.addLast(nodeFromXMI);
                             break;
                         // конечное состояние
-                        case "uml:ActivityFinalNode":
+                        case "uml:ActivityFinalNode": case "uml:FlowFinalNode":
                             nodeFromXMI = new FinalNode(currentElement.getAttribute("xmi:id"), currentElement.getAttribute("inPartition"));
                             nodeFromXMI.setType(ElementType.FINAL_NODE);
                             adNodesList.addLast(nodeFromXMI);
@@ -167,3 +217,11 @@ public class XmiParser {
     }
 
 }
+
+
+//TODO: элементы с координатами лежат в <packagedElement> -> <xmi:Extension> -> <eAnnotations> -> <contents> -> <plane>
+// каждый эл-т находится в теге <ownedDiagramElements>. Атрибут modelElement содержит ид эл-та, кот нам нужен
+// отрицательными координаты быть не могут. Если не указана одна из координат, то она равна 0.
+// Координаты элемента также начинаются с левого верхнего угла. Отступы в экспортированном изображении 30px
+
+// x' = x - dx +30px, гда x' - координата на изображении, x - координата на канве, dx - сдвиг, равный координате х самого левого узла
