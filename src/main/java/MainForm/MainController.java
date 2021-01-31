@@ -5,17 +5,10 @@ import Model.Model;
 public class MainController {
     private MainForm view;
     private Model model;
-    IViewController curViewControl;
-    IViewController tableControl;
-    IViewController imageControl;
 
     public MainController(Model model) {
         this.model = model;
         view = new MainForm(this, model);
-
-        tableControl = new TableViewController(view, model);
-        imageControl = new ImageViewController(view, model);
-        curViewControl = tableControl;
 
         view.createView();
         view.createControls();
@@ -28,7 +21,7 @@ public class MainController {
             view.showMessage("Выберите файл");
             return;
         }
-        // TODO: просим картинку
+        // TODO: если картинки нет
         String pathImage = view.getFileToOpen(".png", "png");
 
         if (pathImage!=null && pathImage.isEmpty()){
@@ -40,25 +33,14 @@ public class MainController {
             return;
         };
 
-        tableControl.draw(path);
-//        tableControl.hide();
         if (pathImage!=null) {
-            imageControl.draw(pathImage);
-//            imageControl.hide();
+            view.drawImage(pathImage);
         }
-//        curViewControl.reveal();
-//        model.startVerification(path);
-    }
+        model.startVerification(path);
+        view.fillMistakesTable();
 
-    public void changeViewController(int index){
-        curViewControl.hide();
-        if (index==0) {
-            curViewControl=tableControl;
-        }
-        else {
-            curViewControl = imageControl;
-        }
-        curViewControl.reveal();
+        view.fillElementsTable();
+
     }
 
     public void writeFile(String path){
@@ -69,5 +51,9 @@ public class MainController {
         }
         model.writeFile(path);
         view.showMessage("Ошибки сохранены в файле '" +path+"'");
+    }
+
+    public void changeViewController(int selectedIndex) {
+
     }
 }

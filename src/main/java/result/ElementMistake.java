@@ -1,12 +1,9 @@
 package result;
 
 import Model.ADNodesList;
-import entities.BaseNode;
 import entities.DiagramElement;
-import entities.ElementType;
 import verification.Level;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -15,20 +12,22 @@ import java.util.List;
 public class ElementMistake extends Mistake{
     private final ADNodesList.ADNode element;
 
-    public ElementMistake(String mistake, Level level, ADNodesList.ADNode element) {
-        super(mistake, level);
+    public ElementMistake(String mistake, Level level, ADNodesList.ADNode element, int id) {
+        super(mistake, level, id);
         this.element = element;
-        if (element.getValue() instanceof DiagramElement){
+        if (!(element.getValue() instanceof DiagramElement)){
             throw new IllegalArgumentException("Элемент не был приведен к классу DiagramElement");
         }
     }
 
-    public ElementType getElementType(){return element.getValue().getType();}
-    public String getElementDescription(){return ((DiagramElement)element.getValue()).getDescription();}
-    public List<String> getNextIds(){
-        return element.getNextIds();
+    public int getElementPetriId(){
+        return ((DiagramElement)element.getValue()).petriId;
     }
-    public List<String> getPrevIds(){
-        return element.getPrevIds();
+    public List<Integer> getNextPetriIds(){
+        return element.getNextPetriIds();
     }
+    public List<Integer> getPrevPetriIds(){
+        return element.getPrevPetriIds();
+    }
+
 }

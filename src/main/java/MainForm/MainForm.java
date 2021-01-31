@@ -1,15 +1,26 @@
 package MainForm;
 
 import Model.Model;
+import debugging.Debug;
 import entities.DiagramElement;
+import result.ElementMistake;
+import result.Mistake;
+import result.Mistakes;
 import view.TableModel;
 import Model.ADNodesList.ADNode;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class MainForm extends JFrame {
     private WrapTableCellRenderer tableCellRenderer = new WrapTableCellRenderer();
@@ -36,6 +47,9 @@ public class MainForm extends JFrame {
     private TableModel elementsModel;
     private GraphicsOnly app;
     private Box boxes[];
+    private Set<Integer> coloredRowsPrev = new HashSet();
+    private Set<Integer> coloredRowsNext = new HashSet();
+    private int coloredRowTarget;
 
     public MainForm(MainController controller, Model model) {
         this.controller = controller;
@@ -54,7 +68,7 @@ public class MainForm extends JFrame {
         scrollImage.getViewport().setBackground(Color.blue);
 
         initTable(tblElements, elementsModel, new String[]{"id", "Тип", "Описание", "Следующие", "Предыдущие"});
-        initTable(tblMistakes, mistakesModel, new String[]{"Серьезность", "Ошибка", "id элемента"});
+        initTable(tblMistakes, mistakesModel, new String[]{"id", "Серьезность", "Ошибка", "id элемента"});
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         miWriteInFile.addActionListener(e->miWriteInFileClicked());
@@ -68,7 +82,69 @@ public class MainForm extends JFrame {
         miExit.addActionListener(e -> System.exit(0));
         
         tpViewer.addChangeListener(e -> tpViewerChanged());
+
+        tblElements.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount()==2) {
+                    tblElements.clearSelection();
+                    tblElements.updateUI();
+                }
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+
+        tblMistakes.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+            public void valueChanged(ListSelectionEvent event) {
+                if (tblMistakes.getSelectedRow()!=-1) {
+                    int mistakeId = Integer.parseInt(tblMistakes.getValueAt(tblMistakes.getSelectedRow(), 0).toString());
+                    Mistake selectedMistake = Mistakes.mistakes.get(mistakeId);
+                    coloredRowsPrev.clear();
+                    coloredRowsNext.clear();
+                    coloredRowTarget = -1;
+                    if (selectedMistake instanceof ElementMistake){
+                        int petriId = ((ElementMistake)selectedMistake).getElementPetriId();
+                        List<Integer> prev;
+                        List<Integer> next;
+                        prev = ((ElementMistake)selectedMistake).getPrevPetriIds();
+                        next = ((ElementMistake)selectedMistake).getNextPetriIds();
+
+                        for (Integer integer : prev) {
+                            coloredRowsPrev.add(integer);
+                        }
+                        for (Integer integer : next) {
+                            coloredRowsNext.add(integer);
+                        }
+                        coloredRowTarget = petriId;
+                    }
+                    tblElements.updateUI();
+//                    app.drawMistake((int)tblMistakes.getValueAt(tblMistakes.getSelectedRow(), 0)); //TODO
+                }
+            }
+        });
     }
+
 
     private void tpViewerChanged() {
         controller.changeViewController(tpViewer.getSelectedIndex());
@@ -184,18 +260,28 @@ public class MainForm extends JFrame {
     public void showMessage(String msg) {
         JOptionPane.showMessageDialog(this, msg);
     }
-    public void createElementsModel(String[] columns){
-        elementsModel = new TableModel(columns);
+    public void fillMistakesTable(){
+        mistakesModel = new TableModel(new String[]{"id", "Серьезность", "Ошибка", "id элемента"});
+        //"id", "Серьезность", "Ошибка", "id элемента"
+        for(int i = 0; i< Mistakes.mistakes.size(); i++){
+            mistakesModel.addRow(new String[]{String.valueOf(Mistakes.mistakes.get(i).getId()),
+                    String.valueOf(Mistakes.mistakes.get(i).getLevel()),
+                    String.valueOf(Mistakes.mistakes.get(i).getMistake()),
+                    Mistakes.mistakes.get(i) instanceof ElementMistake? String.valueOf(((ElementMistake)Mistakes.mistakes.get(i)).getElementPetriId()):""
+            });
+        }
+        setTableModel(mistakesModel, tblMistakes);
     }
-    public void fillTable(){
+    public void fillElementsTable(){
         // "id", "Тип", "Описание", "Следующие", "Предыдущие"
+        elementsModel = new TableModel(new String[]{"id", "Тип", "Описание", "Следующие", "Предыдущие"});
         for(int i=0; i<model.getAdNodesList().size(); i++){
             if(model.getAdNodesList().get(i) instanceof DiagramElement) {
                 ADNode node = model.getAdNodesList().getNode(i);
                 final String[] idsNext = {""};
-                node.getNextIds().forEach(x-> idsNext[0] +=x+" ");
+                node.getNextPetriIds().forEach(x-> idsNext[0] +=x+"; ");
                 final String[] idsPrev = {""};
-                node.getPrevIds().forEach(x-> idsPrev[0] +=x+" ");
+                node.getPrevPetriIds().forEach(x-> idsPrev[0] +=x+"; ");
 
                 elementsModel.addRow(new String[]{String.valueOf(((DiagramElement)node.getValue()).petriId), node.getValue().getType().toString(),
                         ((DiagramElement) node.getValue()).getDescription(),
@@ -207,6 +293,28 @@ public class MainForm extends JFrame {
     }
 
     private void createUIComponents() {
+        // подсветка строк при выборе
+        tblElements = new JTable(elementsModel)
+        {
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column)
+            {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (!isRowSelected(row)) {
+                    if (!coloredRowsPrev.isEmpty()) {
+                        c.setBackground(coloredRowsPrev.contains(row) ? Color.GRAY : getBackground());
+                        if (row == coloredRowTarget) {
+                            c.setBackground(Color.yellow);
+                        }
+                        if (!coloredRowsNext.isEmpty()) {
+                            if (coloredRowsNext.contains(row))
+                                c.setBackground(Color.lightGray);
+                        }
+                    }
+
+                }
+                return c;
+            }
+        };
         imagePanel = new JPanel();
 
         LayoutManager layout = new BoxLayout(imagePanel, BoxLayout.Y_AXIS);

@@ -12,8 +12,13 @@ import verification.Level;
  */
 public class NotADNodeMistakes extends Mistake{
     private BaseNode element;
-    public NotADNodeMistakes(String mistake, Level level, BaseNode element) {
-        super(mistake, level);
+    public NotADNodeMistakes(String mistake, Level level, BaseNode element, int id) {
+        super(mistake, level, id);
+        // добавление спецификации в ошибку
+        if(element instanceof Swimlane)
+            this.mistake = ((Swimlane)element).getName() +": "+ mistake;
+        if(element instanceof ControlFlow)
+            this.mistake = ((ControlFlow)element).getText() +": "+ mistake;
         this.element = element;
         // TODO: для стрелки - откуда и куда (подсветка), для дорожки - название
     }
@@ -38,15 +43,4 @@ public class NotADNodeMistakes extends Mistake{
         return "";
     }
 
-    /**
-     * Получить описание эл-та
-     * @return текст над стрелкой (если имеется), название дорожки или пустая строк
-     */
-    public String getName(){
-        if(element instanceof Swimlane)
-            return ((Swimlane)element).getName();
-        if(element instanceof ControlFlow)
-            return ((ControlFlow)element).getText();
-        return "";
-    }
 }

@@ -7,12 +7,12 @@ import verification.Level;
 
 public class MistakeFactory {
     public static void createMistake(Level level, String mistake, ADNodesList.ADNode element){
-        Mistakes.mistakes.add(new ElementMistake(mistake, level, element));
+        Mistakes.mistakes.add(new ElementMistake(mistake, level, element, Mistakes.mistakes.size()));
     }
     public static void createMistake(Level level, String mistake){
-        Mistakes.mistakes.add(new GeneralMistake(mistake, level));
+        Mistakes.mistakes.add(new GeneralMistake(mistake, level, Mistakes.mistakes.size()));
     }
     public static void createMistake(Level level, String mistake, BaseNode element){
-        Mistakes.mistakes.add(new NotADNodeMistakes(mistake, level, element));
+        Mistakes.mistakes.add(new NotADNodeMistakes(mistake, level, element, Mistakes.mistakes.size()));
     }
 }

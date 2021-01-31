@@ -5,26 +5,24 @@ import verification.Level;
 public abstract class Mistake {
     protected String mistake;
     protected Level level;
-    // TODO: ид ошибок, чтобы на картинке подписывать
+    protected int id;
 
-    public Mistake(String mistake, Level level) {
+    public Mistake(String mistake, Level level, int id) {
         this.mistake = mistake;
         this.level = level;
+        this.id = id;
     }
 
     public String getMistake() {
         return mistake;
     }
 
-    public void setMistake(String mistake) {
-        this.mistake = mistake;
-    }
-
     public Level getLevel() {
         return level;
     }
 
-    public void setLevel(Level level) {
-        this.level = level;
+    public int getId() {
+        return id;
     }
+
 }

@@ -212,11 +212,11 @@ public class ADNodesList {
         }
         public ADNode getPrev(int index){return prev.get(index);}
 
-        public List<String> getNextIds(){
-            return next.stream().map(x-> x.getValue().getId()).collect(Collectors.toList());
+        public List<Integer> getNextPetriIds(){
+            return next.stream().map(x-> ((DiagramElement)x.getValue()).petriId).collect(Collectors.toList());
         }
-        public List<String> getPrevIds(){
-            return prev.stream().map(x-> x.getValue().getId()).collect(Collectors.toList());
+        public List<Integer> getPrevPetriIds(){
+            return prev.stream().map(x-> ((DiagramElement)x.getValue()).petriId).collect(Collectors.toList());
         }
         //endregion
     }
