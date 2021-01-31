@@ -29,10 +29,25 @@ public class MainController {
             return;
         }
         // TODO: просим картинку
-        String pathImage = "";
-        model.startVerification(path);
-        curViewControl.clear();
-        curViewControl.draw();
+        String pathImage = view.getFileToOpen(".png", "png");
+
+        if (pathImage!=null && pathImage.isEmpty()){
+            view.showMessage("Выберите файл");
+            return;
+        }
+        if (!model.readFile(path)){
+            view.showMessage("Проблемы с чтением из файла");
+            return;
+        };
+
+        tableControl.draw(path);
+//        tableControl.hide();
+        if (pathImage!=null) {
+            imageControl.draw(pathImage);
+//            imageControl.hide();
+        }
+//        curViewControl.reveal();
+//        model.startVerification(path);
     }
 
     public void changeViewController(int index){

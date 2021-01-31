@@ -12,20 +12,30 @@ import java.io.File;
 
 public class GraphicsOnly extends JComponent implements ChangeListener {
 
-    public JPanel gui;
+    private JPanel gui;
     /**
      * Displays the image.
      */
-    public JLabel imageCanvas;
-    public Dimension size;
-    public double scale = 1.0;
+    private JLabel imageCanvas;
+    private Dimension size;
+    private double scale = 1.0;
     public  BufferedImage image;
+    private String path = "src\\main\\resources\\noImage256x256.png";
+    private Graphics2D g2;
+
+    public GraphicsOnly(String path) {
+        this.path = path;
+        createGraphics();
+    }
 
     public GraphicsOnly() {
+        createGraphics();
+    }
+    private void createGraphics(){
         size = new Dimension(10, 10);
         setBackground(Color.black);
         try {
-            image = ImageIO.read(new File("C://Users//DocGashe//Documents//Лекции//ДиПломная//Тестирование//Диаграмма активностей ИС управление заданиями пред.-в2.png"));
+            image = ImageIO.read(new File(path));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -68,7 +78,7 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
                 (int)(imageWidth*scale),
                 (int)(imageHeight*scale),
                 image.getType());
-        Graphics2D g2 = bi.createGraphics();
+        g2 = bi.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
         AffineTransform at = AffineTransform.getTranslateInstance(0, 0);
@@ -76,10 +86,6 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
         g2.drawRenderedImage(image, at);
 
         setImage(bi);
-
-        g2.setColor(Color.RED);
-        g2.fillOval((int)(200*scale), (int)(200*scale), (int)(10*scale), (int)(10*scale));
-
     }
 
     public Dimension getPreferredSize() {
@@ -96,5 +102,10 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
         slider.setPaintLabels(true);
         slider.addChangeListener(this);
         return slider;
+    }
+    public void drawMistake(int id){
+        g2.setColor(Color.RED);
+        g2.fillOval((int)(200*scale), (int)(200*scale), (int)(10*scale), (int)(10*scale));
+
     }
 }

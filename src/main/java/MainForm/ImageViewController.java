@@ -23,8 +23,8 @@ public class ImageViewController implements IViewController{
     }
 
     @Override
-    public void draw() {
-        view.drawImage();
+    public void draw(String path) {
+        view.drawImage(path);
     }
 
     @Override

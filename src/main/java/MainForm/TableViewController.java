@@ -22,9 +22,10 @@ public class TableViewController implements IViewController {
     }
 
     @Override
-    public void draw() {
+    public void draw(String path) {
         view.createElementsModel(new String[]{"id", "Тип", "Описание", "Следующие", "Предыдущие"});
         view.fillTable();
+
     }
 
     @Override

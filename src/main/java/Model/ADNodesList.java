@@ -159,7 +159,7 @@ public class ADNodesList {
      */
     public BaseNode get(String id){
         Optional<ADNode> node = nodes.stream().filter(x->x.value.getId().equals(id)).findFirst();
-        return node.map(adNode -> (adNode).getValue()).orElse(null);
+        return node.map(ADNode::getValue).orElse(null);
     }
 
     public ADNode getNode(String id){

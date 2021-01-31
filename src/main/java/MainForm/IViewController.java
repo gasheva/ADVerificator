@@ -8,7 +8,7 @@ import result.Mistakes;
 public interface IViewController {
     void hide();
     void reveal();
-    void draw();
+    void draw(String path);
     void clear();
     // метод для реагирования на нажатия на ошибку в таблице у каждого свой
 }

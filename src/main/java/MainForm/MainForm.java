@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class MainForm extends JFrame {
+    private WrapTableCellRenderer tableCellRenderer = new WrapTableCellRenderer();
     private Model model;
     private MainController controller;
     private JPanel mainPanel;
@@ -33,7 +34,8 @@ public class MainForm extends JFrame {
     private JMenuItem miHelp;
     private TableModel mistakesModel;
     private TableModel elementsModel;
-    private MyCanvas canvas;
+    private GraphicsOnly app;
+    private Box boxes[];
 
     public MainForm(MainController controller, Model model) {
         this.controller = controller;
@@ -42,8 +44,6 @@ public class MainForm extends JFrame {
 
     public void createControls() {
         createJMenuBar();
-        canvas = new MyCanvas();
-        scrollImage.add(canvas);
         scrollImage.setVisible(true);
 
         splitPane.setDividerLocation(0.5);
@@ -123,6 +123,11 @@ public class MainForm extends JFrame {
     }
     private void setTableModel(TableModel model, JTable table){
         table.setModel(model);
+        table.getTableHeader().setReorderingAllowed(false);     // запрет изменения порядка столбцов
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(tableCellRenderer);     // перенос строк в ячейках
+        }
+        table.getColumnModel().getColumn(0).setPreferredWidth(40);  // настройка ширины столбца
     }
     private void initTable(JTable table, TableModel model, String[] headers) {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -139,17 +144,14 @@ public class MainForm extends JFrame {
         //sorter
 //        table.setAutoCreateRowSorter(true);
     }
-    public void drawImage(){
-        String path = getFileToOpen(".png", "png");
-        if (path==null) return;
-        if (path.equals("")) {
-            showMessage("Выберите файл изображения");
-            return;
-        }
-        canvas = new MyCanvas(path);
-        scrollImage.add(canvas);
-
-
+    public void drawImage(String path){
+        app = new GraphicsOnly(path);
+        boxes[0].remove(0);
+        boxes[0].add(app.getGui());
+        app.setImage(app.image);
+        boxes[1].remove(0);
+        boxes[1].add(app.getControl(), "Last");
+        app.paintImage();
     }
     public void setViewTableVisible(boolean isVisible) {
         scrollElements.setVisible(isVisible);
@@ -200,6 +202,7 @@ public class MainForm extends JFrame {
                         idsNext[0], idsPrev[0]});
             }
         }
+        setTableModel(elementsModel, tblElements);
 
     }
 
@@ -207,7 +210,7 @@ public class MainForm extends JFrame {
         imagePanel = new JPanel();
 
         LayoutManager layout = new BoxLayout(imagePanel, BoxLayout.Y_AXIS);
-        Box boxes[] = new Box[2];
+        boxes = new Box[2];
         boxes[0] = Box.createHorizontalBox();
         boxes[1] = Box.createHorizontalBox();
 
@@ -217,7 +220,7 @@ public class MainForm extends JFrame {
         imagePanel.add(boxes[1]);
         imagePanel.setLayout(layout);
 
-        GraphicsOnly app = new GraphicsOnly();
+        app = new GraphicsOnly();
         boxes[0].add(app.getGui());
         app.setImage(app.image);
         boxes[1].add(app.getControl(), "Last");
