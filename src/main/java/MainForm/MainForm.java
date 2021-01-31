@@ -6,6 +6,7 @@ import entities.DiagramElement;
 import result.ElementMistake;
 import result.Mistake;
 import result.Mistakes;
+import result.NotADNodeMistakes;
 import view.TableModel;
 import Model.ADNodesList.ADNode;
 
@@ -24,6 +25,7 @@ import java.util.Set;
 
 public class MainForm extends JFrame {
     private WrapTableCellRenderer tableCellRenderer = new WrapTableCellRenderer();
+    private WrapTableCellRenderer tableCellRenderer2 = new WrapTableCellRenderer();
     private Model model;
     private MainController controller;
     private JPanel mainPanel;
@@ -139,7 +141,13 @@ public class MainForm extends JFrame {
                         coloredRowTarget = petriId;
                     }
                     tblElements.updateUI();
-//                    app.drawMistake((int)tblMistakes.getValueAt(tblMistakes.getSelectedRow(), 0)); //TODO
+                    app.paintImage();
+                    if(selectedMistake instanceof NotADNodeMistakes)
+                        app.drawMistake(Integer.parseInt(tblMistakes.getValueAt(tblMistakes.getSelectedRow(), 0).toString()),
+                                ((NotADNodeMistakes)selectedMistake).getX(), ((NotADNodeMistakes)selectedMistake).getY()); //TODO
+                    if(selectedMistake instanceof ElementMistake)
+                        app.drawMistake(Integer.parseInt(tblMistakes.getValueAt(tblMistakes.getSelectedRow(), 0).toString()),
+                                ((ElementMistake)selectedMistake).getX(), ((ElementMistake)selectedMistake).getY());
                 }
             }
         });
@@ -200,9 +208,10 @@ public class MainForm extends JFrame {
     private void setTableModel(TableModel model, JTable table){
         table.setModel(model);
         table.getTableHeader().setReorderingAllowed(false);     // запрет изменения порядка столбцов
-        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(tableCellRenderer);     // перенос строк в ячейках
-        }
+        if (table==tblMistakes)
+            table.getColumnModel().getColumn(2).setCellRenderer(tableCellRenderer); // перенос строк в ячейках
+        else table.getColumnModel().getColumn(1).setCellRenderer(tableCellRenderer2);
+
         table.getColumnModel().getColumn(0).setPreferredWidth(40);  // настройка ширины столбца
     }
     private void initTable(JTable table, TableModel model, String[] headers) {
@@ -228,12 +237,6 @@ public class MainForm extends JFrame {
         boxes[1].remove(0);
         boxes[1].add(app.getControl(), "Last");
         app.paintImage();
-    }
-    public void setViewTableVisible(boolean isVisible) {
-        scrollElements.setVisible(isVisible);
-    }
-    public void setViewDiagramVisible(boolean isVisible) {
-        scrollImage.setVisible(isVisible);
     }
     public String getFileToOpen(String descr, String extension) {
         JFileChooser c = new JFileChooser("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование");

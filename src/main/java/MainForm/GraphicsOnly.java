@@ -1,5 +1,7 @@
 package MainForm;
 
+import debugging.Debug;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -22,6 +24,7 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
     public  BufferedImage image;
     private String path = "src\\main\\resources\\noImage256x256.png";
     private Graphics2D g2;
+    private int x = -1 , y= -1, id = -1;
 
     public GraphicsOnly(String path) {
         this.path = path;
@@ -71,7 +74,7 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
         paintImage();
     }
 
-    protected void paintImage() {
+    public void paintImage() {
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();
         BufferedImage bi = new BufferedImage(
@@ -84,8 +87,8 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
         AffineTransform at = AffineTransform.getTranslateInstance(0, 0);
         at.scale(scale, scale);
         g2.drawRenderedImage(image, at);
-
         setImage(bi);
+        if (id!=-1) drawMistake(id, x, y);
     }
 
     public Dimension getPreferredSize() {
@@ -103,9 +106,12 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
         slider.addChangeListener(this);
         return slider;
     }
-    public void drawMistake(int id){
+    public void drawMistake(int id, int x, int y){
+        this.x = x;
+        this.y = y;
+        this.id = id;
+        Debug.println("[x] x="+x+" y="+y);
         g2.setColor(Color.RED);
-        g2.fillOval((int)(200*scale), (int)(200*scale), (int)(10*scale), (int)(10*scale));
-
+        g2.fillOval(((int)(x*scale)), ((int)(y*scale)), (int)(10*scale), (int)(10*scale));
     }
 }

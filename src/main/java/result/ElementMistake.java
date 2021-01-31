@@ -30,4 +30,10 @@ public class ElementMistake extends Mistake{
         return element.getPrevPetriIds();
     }
 
+    public int getX() {
+        return element.getValue().x;
+    }
+    public int getY() {
+        return element.getValue().y;
+    }
 }

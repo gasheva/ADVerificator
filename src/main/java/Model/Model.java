@@ -2,6 +2,8 @@ package Model;
 
 import debugging.Debug;
 import org.xml.sax.SAXException;
+import result.Mistake;
+import result.Mistakes;
 import result.VerificationResult;
 import verification.Level;
 import verification.lexical.LexicalAnalizator;
@@ -11,6 +13,7 @@ import xmiparser.XmiParser;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.util.LinkedList;
 
 public class Model {
     private ADNodesList adNodesList;
@@ -21,7 +24,7 @@ public class Model {
      * @return
      */
     public int startVerification(String path){
-
+        Mistakes.mistakes = new LinkedList<>();
         LexicalAnalizator lexicalAnalizator = new LexicalAnalizator(Level.EASY);
         lexicalAnalizator.setDiagramElements(adNodesList);
         lexicalAnalizator.check();

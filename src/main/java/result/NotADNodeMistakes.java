@@ -43,4 +43,10 @@ public class NotADNodeMistakes extends Mistake{
         return "";
     }
 
+    public int getX() {
+        return element.x;
+    }
+    public int getY() {
+        return element.y;
+    }
 }
