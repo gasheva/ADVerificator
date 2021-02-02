@@ -120,7 +120,7 @@ public class ADNodesList {
     public void print(){
         for (ADNode node : nodes) {
             if (node.getValue() instanceof DiagramElement) {
-                Debug.print("Cur: "+node.getValue().getType()+" | ");
+                Debug.print("Cur: ["+((DiagramElement)node.getValue()).petriId+"] "+((DiagramElement)node.getValue()).getDescription()+" " +node.getValue().getType()+" | ");
                 for (int i = 0; i < node.next.size(); i++) {
                     Debug.print(node.getNext(i).getValue().getType() + " ");
                 }

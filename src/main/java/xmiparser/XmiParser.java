@@ -79,8 +79,10 @@ public class XmiParser {
                     if (!yStr.equals(""))
                         y = Integer.parseInt(yStr);
 
-                    xMin = Math.min(x, xMin);
-                    yMin = Math.min(y, yMin);
+                    if (x!=0) {
+                        xMin = Math.min(x, xMin);
+                        yMin = Math.min(y, yMin);
+                    }
                     Debug.println("[x] xMin="+xMin+" yMin="+yMin);
                     // ищем эл-т по ид
                     BaseNode node = adNodesList.get(id);
@@ -91,6 +93,11 @@ public class XmiParser {
 
                 }
             }
+        }
+        for(int i=0; i<adNodesList.size(); i++) {
+            adNodesList.get(i).x -= (xMin+150);
+            adNodesList.get(i).y -= (yMin-45);
+
         }
     }
 

@@ -170,12 +170,9 @@ public class LexicalAnalizator {
      * Ошибки, которые могут возникнуть на данном этапе
      */
     private enum MISTAKES {
-        NOT_FROM_AD,
         SMALL_LETTER,
         NOT_NOUN,
         FLOW_HAVE_MARK,
-        HAVE_NOT_IN_FLOW,
-        HAVE_NOT_OUT_FLOW,
         HAVE_NOT_OUT_PARTION,
         END_WITH_QUEST,
         HAVE_NOT_QUEST,
@@ -186,18 +183,12 @@ public class LexicalAnalizator {
         @Override
         public String toString() {
             switch (this) {
-                case NOT_FROM_AD:
-                    return "лексема не принадлежит AD";
                 case SMALL_LETTER:
                     return "имя начинается с маленькой буквы";
                 case NOT_NOUN:
                     return "первое слово возможно не является именем существительным";
                 case FLOW_HAVE_MARK:
                     return "переход имеет подпись, но не является альтернативой условного перехода";
-                case HAVE_NOT_IN_FLOW:
-                    return "отсутствует входящий переход";
-                case HAVE_NOT_OUT_FLOW:
-                    return "отсутствует выходящий переход";
                 case HAVE_NOT_OUT_PARTION:
                     return "элемент не принадлежит никакому участнику";
                 case END_WITH_QUEST:

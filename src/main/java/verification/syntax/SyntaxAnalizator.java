@@ -88,13 +88,13 @@ public class SyntaxAnalizator {
             }
         }
         if (finalCount==0)
-            MistakeFactory.createMistake(Level.HARD, MISTAKES.NO_FINAL.toString());
+            MistakeFactory.createMistake(Level.FATAL, MISTAKES.NO_FINAL.toString());
 //            writeMistake(Level.HARD.toString()+" "+MISTAKES.NO_FINAL.toString());
         if (initialCount==0)
-            MistakeFactory.createMistake(Level.HARD, MISTAKES.NO_INITIAL.toString());
+            MistakeFactory.createMistake(Level.FATAL, MISTAKES.NO_INITIAL.toString());
 //            writeMistake(Level.HARD.toString()+" "+MISTAKES.NO_INITIAL.toString());
         if (activityCount==0)
-            MistakeFactory.createMistake(Level.HARD, MISTAKES.NO_ACTIVITIES.toString());
+            MistakeFactory.createMistake(Level.FATAL, MISTAKES.NO_ACTIVITIES.toString());
 //            writeMistake(Level.HARD.toString()+" "+MISTAKES.NO_ACTIVITIES.toString());
 
         // проверка, что имена активностей уникальны
@@ -102,7 +102,7 @@ public class SyntaxAnalizator {
         for (int i = 0; i < activities.size()-1; i++) {
             for (int j = i+1; j < activities.size(); j++) {
                 if (activities.get(i).getName().equals(activities.get(j).getName()))
-                    MistakeFactory.createMistake(Level.HARD, MISTAKES.REPEATED_ACT.toString(), diagramElements.getNode(i));
+                    MistakeFactory.createMistake(Level.HARD, MISTAKES.REPEATED_ACT.toString(), diagramElements.getNode(activities.get(i).getId()));
 //                    writeMistake(Level.HARD.toString(), activities.get(i).getType().toString(), activities.get(i).getName(), MISTAKES.REPEATED_ACT.toString());
             }
         }
@@ -126,18 +126,18 @@ public class SyntaxAnalizator {
      */
     private void checkInOut(DiagramElement currentNode, String name, ADNodesList.ADNode node){
         if ((currentNode).inSize()==0)
-            MistakeFactory.createMistake(Level.HARD, MISTAKES.NO_IN.toString(), node);
+            MistakeFactory.createMistake(Level.FATAL, MISTAKES.NO_IN.toString(), node);
 //            writeMistake(Level.HARD.toString(), currentNode.getType().toString(), name, MISTAKES.NO_IN.toString());
         if ((currentNode).outSize()==0)
-            MistakeFactory.createMistake(Level.HARD, MISTAKES.NO_OUT.toString(), node);
+            MistakeFactory.createMistake(Level.FATAL, MISTAKES.NO_OUT.toString(), node);
 //            writeMistake(Level.HARD.toString(), currentNode.getType().toString(), name, MISTAKES.NO_OUT.toString());
     }
 
     private void checkFork(ForkNode fork, ADNodesList.ADNode node){
         for (int i = 0; i < fork.outSize(); i++) {
             ElementType elementType = diagramElements.get(((ControlFlow)diagramElements.get(fork.getOutId(i))).getTargets()).getType();
-            if (elementType!=ElementType.ACTIVITY && elementType!= ElementType.DECISION)
-                MistakeFactory.createMistake(Level.HARD, MISTAKES.OUT_NOT_IN_ACT.toString(), node);
+            if (elementType!=ElementType.ACTIVITY && elementType!= ElementType.DECISION && elementType!= ElementType.FORK)
+                MistakeFactory.createMistake(Level.FATAL, MISTAKES.OUT_NOT_IN_ACT.toString(), node);
 //                writeMistake(level.toString(), fork.getType().toString(), "", MISTAKES.OUT_NOT_IN_ACT.toString());
         }
     }
@@ -162,7 +162,7 @@ public class SyntaxAnalizator {
         boolean checkAlt = true;
         // проверка, что альтернативы есть
         if (decision.alternativeSize()==0){
-            MistakeFactory.createMistake(Level.HARD, MISTAKES.DO_NOT_HAVE_ALT.toString(), node);
+            MistakeFactory.createMistake(Level.FATAL, MISTAKES.DO_NOT_HAVE_ALT.toString(), node);
 //            writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.DO_NOT_HAVE_ALT.toString());
             checkAlt = false;
         }
@@ -180,7 +180,7 @@ public class SyntaxAnalizator {
                 for (int j = i + 1; j < decision.outSize(); j++) {
                     String targetId =((ControlFlow)diagramElements.get(decision.getOutId(i))).getTargets();
                     if (targetId.equals(((ControlFlow)diagramElements.get(decision.getOutId(j))).getTargets()))
-                        MistakeFactory.createMistake(Level.HARD, MISTAKES.SAME_TARGET.toString(), node);
+                        MistakeFactory.createMistake(Level.FATAL, MISTAKES.SAME_TARGET.toString(), node);
 //                        writeMistake(Level.HARD.toString(), decision.getType().toString(), decision.getQuestion(), MISTAKES.SAME_TARGET.toString());
                     if (diagramElements.get(targetId).getType()==ElementType.DECISION)
                         MistakeFactory.createMistake(Level.HARD, MISTAKES.NEXT_DECISION.toString(), node);

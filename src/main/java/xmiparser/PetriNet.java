@@ -5,7 +5,10 @@ import debugging.Debug;
 import entities.ActivityNode;
 import entities.DiagramElement;
 import entities.ElementType;
+import result.MistakeFactory;
 import result.VerificationResult;
+import verification.Level;
+import verification.lexical.LexicalAnalizator;
 
 import java.util.*;
 
@@ -15,6 +18,7 @@ public class PetriNet {
     public static final char NEW_TOKEN = '2';
     public final  int NO_COLOR = 0;
     private final Random random = new Random();
+    private ADNodesList list;
 
     private Map<Integer, Stack<Integer>> colors = new HashMap<>(); // для каждого элемента хранит стек цветов
 
@@ -40,6 +44,7 @@ public class PetriNet {
     }
 
     public void petriCheck(ADNodesList adList){
+        list = adList;
         Queue<StringBuilder> leaves = new LinkedList<>();       // необработанные маски
         Set<String> masksInUsed = new HashSet<>(adList.getPetriElementsCount());   // использованные маски
 
@@ -73,6 +78,7 @@ public class PetriNet {
             stepResultMasks.clear();
             StringBuilder stepMask = new StringBuilder(originMask); // маска, которую будем изменять по мере деактивации токенов
             stepResultMasks.add(new StringBuilder(stepMask));   // добавляем в список результирующих масок исходную (изменится в процессе)
+            Debug.println(originMask);
 
             int i=0;
 
@@ -166,7 +172,8 @@ public class PetriNet {
                 for (int j = 0; j < originMask.length(); j++) {
                     if(originMask.charAt(j)==TOKEN) activateIndexes.append(j).append(" ");
                 }
-                writeMistake("При активации элементов " + activateIndexes+" возник" + MISTAKES.DEAD_ROAD);
+//                writeMistake("При активации элементов " + activateIndexes+" возник" + MISTAKES.DEAD_ROAD);
+                MistakeFactory.createMistake(Level.HARD, activateIndexes + " "+ MISTAKES.DEAD_ROAD.toString());
             }
             Debug.print("");
             // проверяем, что новой маски нет во множестве обработанных и добавляем в необработанные в таком случае
@@ -175,8 +182,11 @@ public class PetriNet {
                     // проверяем, не достигли ли конечной маркировки (существует путь позволяющей до нее добраться)
                     if(resultMask.charAt(indexOfFinalNode) == TOKEN) {
                         canReachFinal = true;
-                        if(colors.get(indexOfFinalNode).peek()!=NO_COLOR)
-                            writeMistake(MISTAKES.FINAL_COLOR_TOKEN.toString());
+                        if(colors.get(indexOfFinalNode).peek()!=NO_COLOR) {
+//                            writeMistake(MISTAKES.FINAL_COLOR_TOKEN.toString());
+                            MistakeFactory.createMistake(Level.HARD, MISTAKES.FINAL_COLOR_TOKEN.toString());
+                            return;
+                        }
                         //region Проверка, что не осталось токенов
                         int tokenCount = 0;
                         StringBuilder activateIndexes = new StringBuilder();
@@ -186,9 +196,11 @@ public class PetriNet {
                                 activateIndexes.append(j).append(" ");
                             }
                         }
-                        if (tokenCount>1)
-                            writeMistake("Достижение конечного состояния с активированными эл-ми" +
-                                    activateIndexes +". " + MISTAKES.MANY_TOKENS_IN_END);
+                        if (tokenCount>1) {
+//                            writeMistake("Достижение конечного состояния с активированными эл-ми" +
+//                                    activateIndexes +". " + MISTAKES.MANY_TOKENS_IN_END);
+//                            MistakeFactory.createMistake(Level.HARD, MISTAKES.MANY_TOKENS_IN_END.toString());
+                        }
                         //endregion
                     }
                     else leaves.add(new StringBuilder(resultMask));
@@ -200,7 +212,9 @@ public class PetriNet {
 
         // проверяем, что конечное состояние было достигнуто
         if (!canReachFinal){
-            writeMistake(MISTAKES.COULD_NOT_REACH_FINAL.toString());
+//            writeMistake(MISTAKES.COULD_NOT_REACH_FINAL.toString());
+            MistakeFactory.createMistake(Level.HARD, MISTAKES.COULD_NOT_REACH_FINAL.toString());
+
         }
         else{
             Debug.println("Достигли конечное состояние");
@@ -212,47 +226,27 @@ public class PetriNet {
     // выводить таблицу ид (обычный и петри), тип эл-та, описание эл-та
     // при наведении на ошибку - возможные причины
 
-    private void writeMistake(String mistake){
-        VerificationResult.mistakes.add(mistake);
-    }
-
-    private void writeMistake(String level, String elType, String name, String mistake){
-        VerificationResult.mistakes.add(level+" "+ elType+ " \""+name+"\": "+mistake);
-    }
-
-    /**
-     * Ошибки, которые могут возникнуть на данном этапе
-     */
-    private enum MISTAKES{
-        TWO_TOKENS,
-        DEAD_ROAD,
-        MANY_TOKENS_IN_END,
-        COULD_NOT_REACH_FINAL,
-        FINAL_COLOR_TOKEN;
-        @Override
-        public String toString() {
-            switch (this) {
-                case TWO_TOKENS: return "в элементе пересеклись токены. Возможен тупик";
-                case DEAD_ROAD: return "тупик";
-                case MANY_TOKENS_IN_END: return "при достижении конечного состояния остались токены";
-                case COULD_NOT_REACH_FINAL: return "недостижимое конечное состояние";       // TODO: вывод масок-тупиков
-                case FINAL_COLOR_TOKEN: return "достигли конечное состояние с цветным токеном. Отсутствует парный синхронизатор";
-                default:
-                    throw new IllegalArgumentException();
-            }
-        }
-    }
 
     private void moveColors(int indexOfNewToken, int curNodeIndex, Stack<Integer> newColors){
-        colors.put(indexOfNewToken, newColors);
+        colors.put(indexOfNewToken, (Stack<Integer>)newColors.clone());
         colors.put(curNodeIndex, new Stack<>());
     }
 
+    /**
+     * Проверка был ли данный элемент раннее активирован. Если да, то проверка завершается
+     * @param tokenIndex
+     * @param stepResultMasks
+     * @param curNode
+     * @return
+     */
     private boolean wasAlreadyActive(int tokenIndex, List<StringBuilder> stepResultMasks, ADNodesList.ADNode curNode){
         for (StringBuilder stepResultMask : stepResultMasks) {
             if(stepResultMask.charAt(tokenIndex)!=NO_TOKEN) {
-                ElementType type = curNode.getValue().getType();
-                writeMistake("", type.toString(), type==ElementType.ACTIVITY? ((ActivityNode) curNode.getValue()).getName():"", MISTAKES.TWO_TOKENS.toString());
+                //writeMistake("", type.toString(), type==ElementType.ACTIVITY? ((ActivityNode) curNode.getValue()).getName():"", MISTAKES.TWO_TOKENS.toString());
+                if(curNode.getValue().getType()!=ElementType.FINAL_NODE)
+                    MistakeFactory.createMistake(Level.HARD, MISTAKES.TWO_TOKENS.toString(), curNode);
+                else
+                    MistakeFactory.createMistake(Level.HARD, MISTAKES.MANY_TOKENS_IN_END.toString(), curNode);
                 return true;
             }
         }
@@ -313,11 +307,18 @@ public class PetriNet {
         StringBuilder newMask = new StringBuilder(mask);
         int color = 0;
         // все предшествующие элементы должны содержать токен одного цвета
+
         for (int i = 0; i < element.prevSize(); i++) {
             int idPrev = ((DiagramElement)element.getPrev(i).getValue()).petriId;
             if (mask.charAt(idPrev) == NO_TOKEN)
                 return new StringBuilder("-1");
-            if(i==0) color = colors.get(idPrev).peek();
+            try {
+                if(i==0) color = colors.get(idPrev).peek(); // TODO
+            }
+            catch (Exception e){
+                int k=0;
+            }
+
             if(colors.get(idPrev).peek()!=color)
                 return new StringBuilder("-1");
             newMask.setCharAt(idPrev, NO_TOKEN);    // удаляем токены из предшествующих
@@ -338,4 +339,29 @@ public class PetriNet {
         return newMask;
     }
 
+    /**
+     * Ошибки, которые могут возникнуть на данном этапе
+     */
+    private enum MISTAKES{
+        TWO_TOKENS,
+        DEAD_ROAD,
+        MANY_TOKENS_IN_END,
+        COULD_NOT_REACH_FINAL,
+        FINAL_COLOR_TOKEN;
+        @Override
+        public String toString() {
+            switch (this) {
+                // просто пересечение двух токенов
+                case TWO_TOKENS: return "в элементе пересеклись токены. Возможно отсутствие синхронизатора";
+                case DEAD_ROAD: return "тупик";
+                // возможно пересечение двух токенов в конечном состоянии из-за отсутствия синхронизатора
+                case MANY_TOKENS_IN_END: return "при достижении конечного состояния остались токены";
+                case COULD_NOT_REACH_FINAL: return "недостижимое конечное состояние. Возможно имеется синхронизатор, " +
+                        "который невозможно активировать";       // TODO: вывод масок-тупиков
+                case FINAL_COLOR_TOKEN: return "достигли конечное состояние с цветным токеном. Отсутствует парный синхронизатор";
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
+    }
 }

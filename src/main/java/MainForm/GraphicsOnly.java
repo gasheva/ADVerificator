@@ -113,5 +113,6 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
         Debug.println("[x] x="+x+" y="+y);
         g2.setColor(Color.RED);
         g2.fillOval(((int)(x*scale)), ((int)(y*scale)), (int)(10*scale), (int)(10*scale));
+//        g2.drawString(String.valueOf(id), ((int)(x*scale)), ((int)(y*scale)));
     }
 }

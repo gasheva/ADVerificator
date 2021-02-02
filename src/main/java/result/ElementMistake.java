@@ -36,4 +36,10 @@ public class ElementMistake extends Mistake{
     public int getY() {
         return element.getValue().y;
     }
+    public String getDescr(){
+        return ((DiagramElement)element.getValue()).getDescription();
+    }
+    public String getType(){
+        return (element.getValue()).getType().toString();
+    }
 }
