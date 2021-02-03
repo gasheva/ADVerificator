@@ -71,113 +71,126 @@ public class PetriNet {
         List<List<Token>> stepResultMasks = new LinkedList<>();         // содержит маски, кот могут получиться на каждом шаге
 
         // главный цикл прохода по всем элементам, участвующих в проверке
-        while (cont){
+        while (cont) {
             List<Token> originMask = leaves.poll();  // берем первую маску
             stepResultMasks.clear();
             List<Token> stepMask = copyMask(originMask); // маска, которую будем изменять по мере деактивации токенов
             stepResultMasks.add(copyMask(stepMask));   // Если список масок не изменится, то будет тупик, тк текущая маска уже добавлена в использованные
 
-            int i=0;
-            Debug.println("Or: "+maskToString(originMask));
+            int i = 0;
+            Debug.println("Or: " + maskToString(originMask));
 
             // проходим по всем элементам маски, находим активированные
             // и проверяем, можно ли активировать следующий элемент
-            while (i < stepMask.size()) {
-                if (stepMask.get(i).type != TOKEN) {
-                    i++;
-                    continue;   // интересуют только эл-ты, содержащие токены на данном шаге
-                }
-                // нашли активный элемент
-                ADNodesList.ADNode curNode = adList.getNodeByPetriIndex(i);     //индекс в списке совпадает с петри ид эл-та
-                int curNodeIndex = ((DiagramElement) curNode.getValue()).petriId;
+            for (int stepProhod = 0; stepProhod < 2; stepProhod++){     // сначала проходим по условным, затем по остальным эл-м
+                i=0;
+                while (i < stepMask.size()) {
+                    if (stepProhod == 0 && adList.getNodeByPetriIndex(i).getValue().getType() != ElementType.DECISION) {
+                        i++;
+                        continue;   // интересуют только эл-ты, содержащие токены на данном шаге
+                    }
+                    if (stepProhod == 0 && adList.getNodeByPetriIndex(i).getValue().getType() == ElementType.DECISION && stepMask.get(i).type != TOKEN) {
+                        i++;
+                        continue;   // интересуют только эл-ты, содержащие токены на данном шаге
+                    }
+                    if (stepProhod == 1 && stepMask.get(i).type != TOKEN) {
+                        i++;
+                        continue;   // интересуют только эл-ты, содержащие токены на данном шаге
+                    }
+//                if (stepMask.get(i).type != TOKEN) {
+//                    i++;
+//                    continue;   // интересуют только эл-ты, содержащие токены на данном шаге
+//                }
+                    // нашли активный элемент
+                    ADNodesList.ADNode curNode = adList.getNodeByPetriIndex(i);     //индекс в списке совпадает с петри ид эл-та
+                    int curNodeIndex = ((DiagramElement) curNode.getValue()).petriId;
 //                Stack<Integer>newColors = colors.get(curNodeIndex);     // получаем цвета токена текущего эл-та
-                List<Integer> colorsCurToken = new LinkedList<>(stepMask.get(curNodeIndex).colors);
+                    List<Integer> colorsCurToken = new LinkedList<>(stepMask.get(curNodeIndex).colors);
 
-                // особо обрабатываем ситуации, когда элемент имеет несколько выходных переходов
-                if(curNode.nextSize()>1) {
-                    // если эл-т разветвитель, то последующее состояние единственно, однако надо установить несколько токенов за раз
-                    if (curNode.getValue().getType() == ElementType.FORK) {
+                    // особо обрабатываем ситуации, когда элемент имеет несколько выходных переходов
+                    if (curNode.nextSize() > 1) {
+                        // если эл-т разветвитель, то последующее состояние единственно, однако надо установить несколько токенов за раз
+                        if (curNode.getValue().getType() == ElementType.FORK) {
 //                        stepMask.setCharAt(curNodeIndex, NO_TOKEN);     // удаляем из маски токен
 //                        newColors.push(generateRandomColor());          // добавляем новый цвет токена
-                        colorsCurToken.add(generateRandomColor());
+                            colorsCurToken.add(generateRandomColor());
 
-                        // активируем все следующие элементы
-                        for (int j = 0; j < curNode.nextSize(); j++) {
-                            // сразу после форка не может быть join'a, поэтому все эл-ты будут активированы
-                            int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;
-                            // проверка, что эл-т не был раннее активирован
-                            if(wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(j))) return;
-                            // изменяем существующие результирующие маски
-                            updateStepMasks(((DiagramElement) curNode.getValue()).petriId, indexOfNewToken, stepResultMasks, colorsCurToken);
-                            // moveColors(indexOfNewToken, curNodeIndex, newColors);   // связываем цвета с эл-м
+                            // активируем все следующие элементы
+                            for (int j = 0; j < curNode.nextSize(); j++) {
+                                // сразу после форка не может быть join'a, поэтому все эл-ты будут активированы
+                                int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;
+                                // проверка, что эл-т не был раннее активирован
+                                if (wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(j))) return;
+                                // изменяем существующие результирующие маски
+                                updateStepMasks(((DiagramElement) curNode.getValue()).petriId, indexOfNewToken, stepResultMasks, colorsCurToken);
+                                // moveColors(indexOfNewToken, curNodeIndex, newColors);   // связываем цвета с эл-м
+                            }
+                            setNewEmptyToken(stepMask, curNodeIndex);
                         }
-                        setNewEmptyToken(stepMask, curNodeIndex);
-                    }
-                    // если это условный оператор, то он порождает несколько возможных последующих состояний
-                    else {
-                        List<List<Token>> decisionMasks = new LinkedList<>();   // содержит все возможные маски вариантов перемещения токена
-                        boolean tokenWasRemoved = false;
-                        // активируем следующие элементы по одному
-                        for (int j = 0; j < curNode.nextSize(); j++) {
-                            int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;      // индекс активируемого эл-та
-                            // проверка, что эл-т не был раннее активирован
-                            if(wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(j))) return;
-                            // Join обрабатывается с помощью reverse проверки
-                            if ((curNode.getNext(j).getValue()).getType() == ElementType.JOIN) {    //TODO: не уверена
-                                List<List<Token>> temp = copyMasks(stepResultMasks);
-                                List<Token> result = activateJoin(curNode.getNext(j), stepMask, temp, colorsCurToken);
-                                if (result!=null) {
-                                    stepMask = result;
-                                    decisionMasks.addAll(temp);
-                                    tokenWasRemoved=true;
-                                }
-                            } else {        // если это не join
-                                // удаляем из маски шага
+                        // если это условный оператор, то он порождает несколько возможных последующих состояний
+                        else {
+                            List<List<Token>> decisionMasks = new LinkedList<>();   // содержит все возможные маски вариантов перемещения токена
+                            boolean tokenWasRemoved = false;
+                            // активируем следующие элементы по одному
+                            for (int j = 0; j < curNode.nextSize(); j++) {
+                                int indexOfNewToken = ((DiagramElement) curNode.getNext(j).getValue()).petriId;      // индекс активируемого эл-та
+                                // проверка, что эл-т не был раннее активирован
+                                if (wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(j))) return;
+                                // Join обрабатывается с помощью reverse проверки
+                                if ((curNode.getNext(j).getValue()).getType() == ElementType.JOIN) {    //TODO: не уверена
+                                    List<List<Token>> temp = copyMasks(stepResultMasks);
+                                    List<Token> result = activateJoin(curNode.getNext(j), stepMask, temp, colorsCurToken);
+                                    if (result != null) {
+                                        stepMask = result;
+                                        decisionMasks.addAll(temp);
+                                        tokenWasRemoved = true;
+                                    }
+                                } else {        // если это не join
+                                    // удаляем из маски шага
 //                                stepMask.setCharAt(((DiagramElement) curNode.getValue()).petriId, NO_TOKEN);
 
-                                // в каждой существующей результирующей маске меняем токен и сохраняем в промежуточный список
-                                // в итоге получится новый список, содержащий несколько вариантов результирующих масок,
-                                // в каждом из которых создан новый токен в зависимости от активированного следующего эл-та
-                                for (List<Token> resultMask : stepResultMasks) {
-                                    List<Token> temp = copyMask(resultMask);
+                                    // в каждой существующей результирующей маске меняем токен и сохраняем в промежуточный список
+                                    // в итоге получится новый список, содержащий несколько вариантов результирующих масок,
+                                    // в каждом из которых создан новый токен в зависимости от активированного следующего эл-та
+                                    for (List<Token> resultMask : stepResultMasks) {
+                                        List<Token> temp = copyMask(resultMask);
 //                                    temp.setCharAt(indexOfNewToken, NEW_TOKEN);
-                                    setToken(temp, indexOfNewToken, NEW_TOKEN, colorsCurToken);     // добавляем новый токен
+                                        setToken(temp, indexOfNewToken, NEW_TOKEN, colorsCurToken);     // добавляем новый токен
 //                                    temp.setCharAt(((DiagramElement) curNode.getValue()).petriId, NO_TOKEN);
-                                    setNewEmptyToken(temp, curNodeIndex);           // удаляем токен текущего эл-та
-                                    decisionMasks.add(temp);
-                                    tokenWasRemoved = true;
-                                }
+                                        setNewEmptyToken(temp, curNodeIndex);           // удаляем токен текущего эл-та
+                                        decisionMasks.add(temp);
+                                        tokenWasRemoved = true;
+                                    }
 //                                moveColors(indexOfNewToken, curNodeIndex, newColors);   // связываем цвета с эл-м
-                            }
+                                }
 
+                            }
+                            // изменяем маску шага и список результирующих масок, если токен был удален
+                            if (tokenWasRemoved) {
+                                setNewEmptyToken(stepMask, ((DiagramElement) curNode.getValue()).petriId);
+                                // меняем результирующую маску
+                                stepResultMasks = decisionMasks;
+                            }
                         }
-                        // изменяем маску шага и список результирующих масок, если токен был удален
-                        if(tokenWasRemoved) {
-                            setNewEmptyToken(stepMask, ((DiagramElement) curNode.getValue()).petriId);
-                            // меняем результирующую маску
-                            stepResultMasks = decisionMasks;
-                        }
-                    }
-                }
-                else{       // если выходной переход один
-                    int indexOfNewToken = ((DiagramElement) curNode.getNext(0).getValue()).petriId;
-                    // проверка, что эл-т не был раннее активирован
-                    if(wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(0))) return;
-                    // если следующий Join
-                    if ((curNode.getNext(0).getValue()).getType() == ElementType.JOIN) {
-                        List<Token> result = activateJoin(curNode.getNext(0), stepMask, stepResultMasks, colorsCurToken);
-                        if (result!=null)
-                            stepMask = result;
-                    }
-                    else {
+                    } else {       // если выходной переход один
+                        int indexOfNewToken = ((DiagramElement) curNode.getNext(0).getValue()).petriId;
+                        // проверка, что эл-т не был раннее активирован
+                        if (wasAlreadyActive(indexOfNewToken, stepResultMasks, curNode.getNext(0))) return;
+                        // если следующий Join
+                        if ((curNode.getNext(0).getValue()).getType() == ElementType.JOIN) {
+                            List<Token> result = activateJoin(curNode.getNext(0), stepMask, stepResultMasks, colorsCurToken);
+                            if (result != null)
+                                stepMask = result;
+                        } else {
 //                        stepMask.setCharAt(((DiagramElement) curNode.getValue()).petriId, NO_TOKEN);
-                        updateStepMasks(((DiagramElement) curNode.getValue()).petriId, indexOfNewToken, stepResultMasks, colorsCurToken);
-                        setNewEmptyToken(stepMask, curNodeIndex);
+                            updateStepMasks(((DiagramElement) curNode.getValue()).petriId, indexOfNewToken, stepResultMasks, colorsCurToken);
+                            setNewEmptyToken(stepMask, curNodeIndex);
 //                        moveColors(indexOfNewToken, curNodeIndex, newColors);   // связываем цвета с эл-м
+                        }
                     }
+                    i++;
                 }
-                i++;
-            }
+        }
             // в результирующих масках заменяем NEW_Token на TOKEN
 //            stepResultMasks.forEach(x->x.replace(0, x.length(), x.toString().replace(String.valueOf(NEW_TOKEN), String.valueOf(TOKEN))));
 
