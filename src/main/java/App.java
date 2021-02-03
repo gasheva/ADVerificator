@@ -23,7 +23,7 @@ public class App {
 
         ADNodesList adNodesList = new ADNodesList();
         XmiParser xmiParser = new XmiParser(adNodesList);
-        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\С координатами\\Ошибка синхронизатора2.xmi");
+        xmiParser.setXmlFile("C:\\Users\\DocGashe\\Documents\\Лекции\\ДиПломная\\Тестирование\\С координатами\\Условный перед join.xmi");
         try {
             xmiParser.Parse();
         } catch (ParserConfigurationException | SAXException | IOException e) {
